@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block title %}Clubs{% endblock %}
+
+{% block content %}
+<script>
+    // Add club-detail-bg class to bg-layer when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelector('.bg-layer').classList.add('club-detail-bg');
+    });
+</script>
+<section class="clubs">
+	<h1>Clubs</h1>
+	<p>{{ clubs|length }} clubs in catalogue</p>
+	<div class="club-list">
+		{% for club in clubs %}
+		<div class="club-card">
+			<h2><a href="{{ url_for('club_detail', club_id=club.id) }}">{{ club.name }}</a></h2>
+			<p>{{ club.description }}</p>
+			<p>Members: <strong>{{ club.members_count }}</strong> — {% if club.is_recruiting %}<span style="color:green">Recruiting</span>{% else %}<span style="color:#888">Closed</span>{% endif %}</p>
+		</div>
+		{% endfor %}
+	</div>
+</section>
+{% endblock %}

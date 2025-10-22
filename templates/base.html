@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1">
+	<title>{% block title %}Site{% endblock %}</title>
+	<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+	<!-- background layer: image + ripple canvas -->
+	<div class="bg-layer" aria-hidden="true">
+		<canvas class="ripple-canvas"></canvas>
+	</div>
+
+	<nav class="navbar">
+		<div class="logo">
+			<img src="{{ url_for('static', filename='images/logo.png') }}" 
+				 alt="IIIT Naya Raipur Logo" 
+				 class="site-logo" />
+			<div class="logo-text">
+				DR. SHYAMA PRASAD MUKHERJEE<br>
+				INTERNATIONAL INSTITUTE OF INFORMATION TECHNOLOGY, NAYA RAIPUR
+			</div>
+		</div>
+
+		<ul class="nav-links">
+			<li><a href="{{ url_for('home') }}">Home</a></li>
+			<li><a href="{{ url_for('about') }}">About</a></li>
+			<li><a href="{{ url_for('clubs') }}">Clubs</a></li>
+			<li><a href="{{ url_for('events') }}">Events</a></li>
+		</ul>
+
+		<div class="profile" aria-hidden="false">
+			<button id="profileBtn" class="profile-btn" aria-haspopup="true" aria-expanded="false">
+				<img src="{{ url_for('static', filename='images/pfp.jpg') }}" alt="Profile" class="pfp">
+			</button>
+			<div id="profileMenu" class="profile-menu" role="menu" aria-hidden="true">
+				<a class="profile-menu-item" href="{{ url_for('index') }}">Logout</a>
+			</div>
+		</div>
+	</nav>
+
+	<main>
+		{% block content %}{% endblock %}
+	</main>
+
+	<footer class="footer">
+		<p>© 2025 International Institute of Information Technology Naya Raipur | All Rights Reserved</p>
+	</footer>
+
+	<script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

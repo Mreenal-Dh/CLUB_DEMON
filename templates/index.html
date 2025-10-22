@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+{% block title %}Login{% endblock %}
+
+{% block content %}
+<div class="login-wrapper">
+    <div class="login-container">
+        <!-- Left Side - Branding -->
+        <div class="login-branding">
+            <div class="branding-content">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="IIIT Logo" class="login-logo">
+                <h1 class="branding-title">Welcome to<br>IIIT Naya Raipur</h1>
+                <p class="branding-subtitle">Student Clubs & Communities</p>
+                <div class="branding-features">
+                    <div class="feature">
+                        <span class="feature-icon">🎓</span>
+                        <span>Explore Clubs</span>
+                    </div>
+                    <div class="feature">
+                        <span class="feature-icon">🤝</span>
+                        <span>Join Communities</span>
+                    </div>
+                    <div class="feature">
+                        <span class="feature-icon">🚀</span>
+                        <span>Grow Together</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side - Login Form -->
+        <div class="login-form-container">
+            <div class="login-form-content">
+                <h2>Sign In</h2>
+                <p class="login-subtitle">Access your account</p>
+
+                <form method="post" action="{{ url_for('index') }}" class="login-form">
+                    <!-- Role Selection -->
+                    <div class="form-group">
+                        <label class="form-label">I am a</label>
+                        <div class="role-selector">
+                            <input type="radio" id="student-role" name="role" value="student" checked>
+                            <label for="student-role" class="role-label">
+                                <span class="role-icon">👤</span>
+                                <span class="role-text">
+                                    <span class="role-title">Student</span>
+                                    <span class="role-desc">Browse clubs & events</span>
+                                </span>
+                            </label>
+
+                            <input type="radio" id="manager-role" name="role" value="manager">
+                            <label for="manager-role" class="role-label">
+                                <span class="role-icon">⚙️</span>
+                                <span class="role-text">
+                                    <span class="role-title">Manager</span>
+                                    <span class="role-desc">Manage clubs</span>
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Username -->
+                    <div class="form-group">
+                        <label for="username" class="form-label">Username</label>
+                        <input 
+                            type="text" 
+                            id="username" 
+                            name="username" 
+                            class="form-input"
+                            placeholder="Enter your username"
+                            required>
+                        <div class="input-underline"></div>
+                    </div>
+
+                    <!-- Password -->
+                    <div class="form-group">
+                        <label for="password" class="form-label">Password</label>
+                        <input 
+                            type="password" 
+                            id="password" 
+                            name="password" 
+                            class="form-input"
+                            placeholder="Enter your password"
+                            required>
+                        <div class="input-underline"></div>
+                    </div>
+
+                    <!-- Error Message -->
+                    {% if message %}
+                        <div class="error-message">
+                            <span class="error-icon">⚠️</span>
+                            {{ message }}
+                        </div>
+                    {% endif %}
+
+                    <!-- Submit Button -->
+                    <button type="submit" class="btn-signin">
+                        Sign In
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                            <polyline points="12 5 19 12 12 19"></polyline>
+                        </svg>
+                    </button>
+
+                    <!-- Guest Access Info -->
+                    <div class="guest-info">
+                        <p>Or <a href="{{ url_for('home') }}" class="guest-link">continue as guest</a> to browse publicly</p>
+                    </div>
+                </form>
+
+                <!-- Footer Info -->
+                <div class="login-footer">
+                    <p class="footer-text">Demo Credentials:</p>
+                    <p class="footer-creds">Student: any username/password</p>
+                    <p class="footer-creds">Manager: admin / adminpass</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

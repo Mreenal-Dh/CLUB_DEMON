@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Edit Club' if club else 'New Club' }}{% endblock %}
+
+{% block content %}
+<section class="club-edit">
+	<h1>{{ 'Edit Club' if club else 'New Club' }}</h1>
+	<form method="post">
+		<label>Name<br><input name="name" value="{{ club.name if club }}"></label><br><br>
+		<label>Description<br><textarea name="description">{{ club.description if club }}</textarea></label><br><br>
+		<label>Members count<br><input name="members_count" value="{{ club.members_count if club }}"></label><br><br>
+		<label>Is recruiting? <input type="checkbox" name="is_recruiting" value="1" {% if club and club.is_recruiting %}checked{% endif %}></label><br><br>
+		<label>Application link<br><input name="application_link" value="{{ club.application_link if club }}"></label><br><br>
+		<button type="submit">Save</button>
+	</form>
+	<p><a href="{{ url_for('manager_dashboard') }}">Back to dashboard</a></p>
+</section>
+{% endblock %}

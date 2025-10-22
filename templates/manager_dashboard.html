@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block title %}Manager Dashboard{% endblock %}
+
+{% block content %}
+<section class="manager-dashboard">
+	<h1>Manager Dashboard</h1>
+	<p>Total clubs: {{ total_clubs }} — Total members: {{ total_members }}</p>
+	<p><a href="{{ url_for('manager_new_club') }}">Create new club</a> | <a href="{{ url_for('manager_logout') }}">Logout</a></p>
+
+	<ul>
+	{% for club in clubs %}
+		<li>
+			<strong>{{ club.name }}</strong> — Members: {{ club.members_count }} —
+			<a href="{{ url_for('manager_edit_club', club_id=club.id) }}">Edit</a>
+		</li>
+	{% endfor %}
+	</ul>
+</section>
+{% endblock %}

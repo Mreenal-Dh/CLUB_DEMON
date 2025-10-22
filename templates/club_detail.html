@@ -1,0 +1,295 @@
+{% extends 'base.html' %}
+{% block title %}{{ club.name }}{% endblock %}
+
+{% block content %}
+<script>
+    // Add club-detail-bg class to bg-layer when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        const bgLayer = document.querySelector('.bg-layer');
+        if (bgLayer) {
+            bgLayer.classList.add('club-detail-bg');
+        }
+    });
+</script>
+
+<div class="club-detail-container">
+    <!-- Hero Section with Club Header -->
+    <section class="club-hero">
+        <div class="club-hero-content">
+            {% if club.get('logo_url') %}
+            <img src="{{ club.logo_url }}" alt="{{ club.name }} Logo" class="club-logo-large">
+            {% else %}
+            <div class="club-logo-placeholder">
+                <span>{{ club.name[0] }}</span>
+            </div>
+            {% endif %}
+            
+            <div class="club-header-info">
+                <h1 class="club-title">{{ club.name }}</h1>
+                <div class="club-meta">
+                    <span class="meta-item">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                        {{ club.members_count }} Members
+                    </span>
+                    <span class="meta-item recruiting-status {% if club.is_recruiting %}recruiting{% else %}closed{% endif %}">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            {% if club.is_recruiting %}
+                            <path d="M12 6v6l4 2"></path>
+                            {% else %}
+                            <line x1="15" y1="9" x2="9" y2="15"></line>
+                            <line x1="9" y1="9" x2="15" y2="15"></line>
+                            {% endif %}
+                        </svg>
+                        {% if club.is_recruiting %}
+                            Actively Recruiting
+                        {% else %}
+                            Recruitment Closed
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content - Two Column Layout -->
+    <div class="club-content-wrapper">
+        <!-- Left Column -->
+        <div class="left-column">
+            <!-- About Section -->
+            <section class="content-card about-card">
+                <h2 class="section-title">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                    About the Club
+                </h2>
+                <p class="club-description">{{ club.description }}</p>
+            </section>
+
+            <!-- Gallery Section -->
+            <section class="content-card gallery-card">
+                <h2 class="section-title">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                        <polyline points="21 15 16 10 5 21"></polyline>
+                    </svg>
+                    Gallery
+                </h2>
+                <div class="gallery-container">
+                    <div class="gallery-grid">
+                        <div class="gallery-item">
+                            <img src="{{ url_for('static', filename='images/club.jpg') }}" alt="Gallery 1">
+                            <div class="gallery-overlay">
+                                <span class="gallery-icon">🔍</span>
+                            </div>
+                        </div>
+                        <div class="gallery-item">
+                            <img src="{{ url_for('static', filename='images/club.jpg') }}" alt="Gallery 2">
+                            <div class="gallery-overlay">
+                                <span class="gallery-icon">🔍</span>
+                            </div>
+                        </div>
+                        <div class="gallery-item">
+                            <img src="{{ url_for('static', filename='images/club.jpg') }}" alt="Gallery 3">
+                            <div class="gallery-overlay">
+                                <span class="gallery-icon">🔍</span>
+                            </div>
+                        </div>
+                        <div class="gallery-item">
+                            <img src="{{ url_for('static', filename='images/club.jpg') }}" alt="Gallery 4">
+                            <div class="gallery-overlay">
+                                <span class="gallery-icon">🔍</span>
+                            </div>
+                        </div>
+                        <div class="gallery-item">
+                            <img src="{{ url_for('static', filename='images/club.jpg') }}" alt="Gallery 5">
+                            <div class="gallery-overlay">
+                                <span class="gallery-icon">🔍</span>
+                            </div>
+                        </div>
+                        <div class="gallery-item">
+                            <img src="{{ url_for('static', filename='images/club.jpg') }}" alt="Gallery 6">
+                            <div class="gallery-overlay">
+                                <span class="gallery-icon">🔍</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Activities Section -->
+            <section class="content-card activities-card">
+                <h2 class="section-title">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M12 1v6m0 6v6m8.66-13.66l-4.24 4.24m-8.48 8.48l-4.24 4.24M23 12h-6m-6 0H1m20.66 8.66l-4.24-4.24m-8.48-8.48l-4.24-4.24"></path>
+                    </svg>
+                    What We Do
+                </h2>
+                <div class="activity-grid">
+                    <div class="activity-item">
+                        <div class="activity-icon">🎓</div>
+                        <h3>Workshops</h3>
+                        <p>Regular skill development sessions</p>
+                    </div>
+                    <div class="activity-item">
+                        <div class="activity-icon">🏆</div>
+                        <h3>Competitions</h3>
+                        <p>Participate in various contests</p>
+                    </div>
+                    <div class="activity-item">
+                        <div class="activity-icon">🤝</div>
+                        <h3>Networking</h3>
+                        <p>Connect with industry experts</p>
+                    </div>
+                    <div class="activity-item">
+                        <div class="activity-icon">🚀</div>
+                        <h3>Projects</h3>
+                        <p>Work on real-world projects</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Team Section -->
+            <section class="content-card team-card">
+                <h2 class="section-title">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                    Meet the Team
+                </h2>
+                <div class="team-grid">
+                    <div class="team-member">
+                        <div class="member-avatar">
+                            <span>CH</span>
+                        </div>
+                        <h3>Club Head</h3>
+                        <p class="member-role">President</p>
+                    </div>
+                    <div class="team-member">
+                        <div class="member-avatar">
+                            <span>VP</span>
+                        </div>
+                        <h3>Vice President</h3>
+                        <p class="member-role">Vice President</p>
+                    </div>
+                    <div class="team-member">
+                        <div class="member-avatar">
+                            <span>TL</span>
+                        </div>
+                        <h3>Tech Lead</h3>
+                        <p class="member-role">Technical Lead</p>
+                    </div>
+                    <div class="team-member">
+                        <div class="member-avatar">
+                            <span>DL</span>
+                        </div>
+                        <h3>Design Lead</h3>
+                        <p class="member-role">Creative Director</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Right Column -->
+        <div class="right-column">
+            <!-- Join Section -->
+            <section class="content-card join-card sticky-card">
+                <h2 class="section-title">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="8.5" cy="7" r="4"></circle>
+                        <line x1="20" y1="8" x2="20" y2="14"></line>
+                        <line x1="23" y1="11" x2="17" y2="11"></line>
+                    </svg>
+                    Join Us
+                </h2>
+                {% if club.is_recruiting %}
+                    <p class="join-message">We're currently looking for enthusiastic members to join our community!</p>
+                    {% if club.get('application_link') %}
+                    <a href="{{ club.application_link }}" target="_blank" class="join-button">
+                        Apply Now
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                            <polyline points="12 5 19 12 12 19"></polyline>
+                        </svg>
+                    </a>
+                    {% else %}
+                    <button class="join-button" onclick="alert('Application link coming soon!')">
+                        Apply Now
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                            <polyline points="12 5 19 12 12 19"></polyline>
+                        </svg>
+                    </button>
+                    {% endif %}
+                {% else %}
+                    <p class="join-message closed-message">Recruitment is currently closed. Check back next semester!</p>
+                    <button class="join-button disabled" disabled>
+                        Recruitment Closed
+                    </button>
+                {% endif %}
+
+                <div class="join-info">
+                    <h3>Why Join?</h3>
+                    <ul>
+                        <li>Build practical skills</li>
+                        <li>Expand your network</li>
+                        <li>Gain leadership experience</li>
+                        <li>Work on exciting projects</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Quick Stats -->
+            <section class="content-card stats-card">
+                <h2 class="section-title">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="20" x2="18" y2="10"></line>
+                        <line x1="12" y1="20" x2="12" y2="4"></line>
+                        <line x1="6" y1="20" x2="6" y2="14"></line>
+                    </svg>
+                    Club Stats
+                </h2>
+                <div class="stats-list">
+                    <div class="stat-item">
+                        <span class="stat-value">{{ club.members_count }}</span>
+                        <span class="stat-label">Active Members</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">25+</span>
+                        <span class="stat-label">Events Held</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">10+</span>
+                        <span class="stat-label">Projects</span>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- Back Navigation -->
+    <div class="back-nav">
+        <a href="{{ url_for('clubs') }}" class="back-link">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+            Back to Clubs
+        </a>
+    </div>
+</div>
+{% endblock %}
