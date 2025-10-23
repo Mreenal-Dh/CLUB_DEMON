@@ -3,7 +3,6 @@
 
 {% block content %}
 <script>
-    // Add club-detail-bg class to bg-layer when page loads
     document.addEventListener('DOMContentLoaded', function() {
         const bgLayer = document.querySelector('.bg-layer');
         if (bgLayer) {
@@ -18,175 +17,29 @@
         <p class="events-subtitle">Discover upcoming workshops, competitions, and cultural activities</p>
     </div>
 
-    <!-- Pinterest-Style Masonry Grid -->
+    <!-- Pinterest-Style Masonry Grid - Dynamically Generated -->
     <div class="events-masonry-grid">
-        <!-- Event Item 1 - Large -->
-        <div class="event-brick size-large" data-event="1">
+        {% for event in events %}
+        <div class="event-brick {{ event.size_class }}" data-event="{{ event.id }}">
             <div class="event-image-wrapper">
-                <img src="{{ url_for('static', filename='images/club.jpg') }}" alt="Event 1" class="event-image">
+                <img src="{{ event.image_url }}" alt="{{ event.title }}" class="event-image">
                 <div class="event-overlay">
-                    <span class="event-date">Oct 25, 2025</span>
+                    <span class="event-date">{{ event.date }}</span>
                 </div>
             </div>
             <div class="event-brick-info">
-                <h3>Tech Symposium 2025</h3>
-                <span class="event-category">Technical</span>
+                <h3>{{ event.title }}</h3>
+                <span class="event-category">{{ event.category }}</span>
             </div>
         </div>
-
-        <!-- Event Item 2 - Medium -->
-        <div class="event-brick size-medium" data-event="2">
-            <div class="event-image-wrapper">
-                <img src="{{ url_for('static', filename='images/club.jpg') }}" alt="Event 2" class="event-image">
-                <div class="event-overlay">
-                    <span class="event-date">Nov 5, 2025</span>
-                </div>
-            </div>
-            <div class="event-brick-info">
-                <h3>Cultural Fest</h3>
-                <span class="event-category">Cultural</span>
-            </div>
+        {% endfor %}
+        
+        {% if events|length == 0 %}
+        <div class="no-events-message">
+            <h2>No Events Yet</h2>
+            <p>Check back later for upcoming events!</p>
         </div>
-
-        <!-- Event Item 3 - Small -->
-        <div class="event-brick size-small" data-event="3">
-            <div class="event-image-wrapper">
-                <img src="{{ url_for('static', filename='images/club.jpg') }}" alt="Event 3" class="event-image">
-                <div class="event-overlay">
-                    <span class="event-date">Nov 12, 2025</span>
-                </div>
-            </div>
-            <div class="event-brick-info">
-                <h3>Hackathon 48hrs</h3>
-                <span class="event-category">Competition</span>
-            </div>
-        </div>
-
-        <!-- Event Item 4 - Wide -->
-        <div class="event-brick size-wide" data-event="4">
-            <div class="event-image-wrapper">
-                <img src="{{ url_for('static', filename='images/club.jpg') }}" alt="Event 4" class="event-image">
-                <div class="event-overlay">
-                    <span class="event-date">Nov 18, 2025</span>
-                </div>
-            </div>
-            <div class="event-brick-info">
-                <h3>AI Workshop Series</h3>
-                <span class="event-category">Workshop</span>
-            </div>
-        </div>
-
-        <!-- Event Item 5 - Medium -->
-        <div class="event-brick size-medium" data-event="5">
-            <div class="event-image-wrapper">
-                <img src="{{ url_for('static', filename='images/club.jpg') }}" alt="Event 5" class="event-image">
-                <div class="event-overlay">
-                    <span class="event-date">Dec 2, 2025</span>
-                </div>
-            </div>
-            <div class="event-brick-info">
-                <h3>Sports Meet 2025</h3>
-                <span class="event-category">Sports</span>
-            </div>
-        </div>
-
-        <!-- Event Item 6 - Tall -->
-        <div class="event-brick size-tall" data-event="6">
-            <div class="event-image-wrapper">
-                <img src="{{ url_for('static', filename='images/club.jpg') }}" alt="Event 6" class="event-image">
-                <div class="event-overlay">
-                    <span class="event-date">Dec 10, 2025</span>
-                </div>
-            </div>
-            <div class="event-brick-info">
-                <h3>Guest Lecture: ML</h3>
-                <span class="event-category">Seminar</span>
-            </div>
-        </div>
-
-        <!-- Event Item 7 - Small -->
-        <div class="event-brick size-small" data-event="7">
-            <div class="event-image-wrapper">
-                <img src="{{ url_for('static', filename='images/club.jpg') }}" alt="Event 7" class="event-image">
-                <div class="event-overlay">
-                    <span class="event-date">Dec 15, 2025</span>
-                </div>
-            </div>
-            <div class="event-brick-info">
-                <h3>Photography Contest</h3>
-                <span class="event-category">Competition</span>
-            </div>
-        </div>
-
-        <!-- Event Item 8 - Large -->
-        <div class="event-brick size-large" data-event="8">
-            <div class="event-image-wrapper">
-                <img src="{{ url_for('static', filename='images/club.jpg') }}" alt="Event 8" class="event-image">
-                <div class="event-overlay">
-                    <span class="event-date">Jan 8, 2026</span>
-                </div>
-            </div>
-            <div class="event-brick-info">
-                <h3>Annual Day Celebration</h3>
-                <span class="event-category">Cultural</span>
-            </div>
-        </div>
-
-        <!-- Event Item 9 - Medium -->
-        <div class="event-brick size-medium" data-event="9">
-            <div class="event-image-wrapper">
-                <img src="{{ url_for('static', filename='images/club.jpg') }}" alt="Event 9" class="event-image">
-                <div class="event-overlay">
-                    <span class="event-date">Jan 15, 2026</span>
-                </div>
-            </div>
-            <div class="event-brick-info">
-                <h3>Startup Pitch Day</h3>
-                <span class="event-category">Competition</span>
-            </div>
-        </div>
-
-        <!-- Event Item 10 - Wide -->
-        <div class="event-brick size-wide" data-event="10">
-            <div class="event-image-wrapper">
-                <img src="{{ url_for('static', filename='images/club.jpg') }}" alt="Event 10" class="event-image">
-                <div class="event-overlay">
-                    <span class="event-date">Jan 22, 2026</span>
-                </div>
-            </div>
-            <div class="event-brick-info">
-                <h3>Music Fest 2026</h3>
-                <span class="event-category">Cultural</span>
-            </div>
-        </div>
-
-        <!-- Event Item 11 - Small -->
-        <div class="event-brick size-small" data-event="11">
-            <div class="event-image-wrapper">
-                <img src="{{ url_for('static', filename='images/club.jpg') }}" alt="Event 11" class="event-image">
-                <div class="event-overlay">
-                    <span class="event-date">Feb 1, 2026</span>
-                </div>
-            </div>
-            <div class="event-brick-info">
-                <h3>Career Fair</h3>
-                <span class="event-category">Professional</span>
-            </div>
-        </div>
-
-        <!-- Event Item 12 - Tall -->
-        <div class="event-brick size-tall" data-event="12">
-            <div class="event-image-wrapper">
-                <img src="{{ url_for('static', filename='images/club.jpg') }}" alt="Event 12" class="event-image">
-                <div class="event-overlay">
-                    <span class="event-date">Feb 10, 2026</span>
-                </div>
-            </div>
-            <div class="event-brick-info">
-                <h3>Innovation Showcase</h3>
-                <span class="event-category">Exhibition</span>
-            </div>
-        </div>
+        {% endif %}
     </div>
 </section>
 
@@ -201,12 +54,10 @@
         </button>
         
         <div class="modal-layout">
-            <!-- Left: Image -->
             <div class="modal-image-container">
                 <img id="modalImage" src="" alt="Event Image" class="modal-image">
             </div>
             
-            <!-- Right: Details -->
             <div class="modal-details">
                 <div class="modal-header">
                     <h2 id="modalTitle">Event Title</h2>
@@ -248,7 +99,7 @@
                     <h3>Organized By</h3>
                     <div class="organizer-info">
                         <div class="organizer-avatar">
-                            <span>CB</span>
+                            <span id="organizerInitials">CB</span>
                         </div>
                         <div class="organizer-text">
                             <h4 id="modalOrganizer">Club Name</h4>
@@ -282,128 +133,20 @@
 </div>
 
 <script>
-// Event data structure (extended)
+// Build event data from server-side data
 const eventData = {
-    1: {
-        title: "Tech Symposium 2025",
-        category: "Technical",
-        date: "October 25, 2025",
-        time: "9:00 AM - 5:00 PM",
-        location: "Main Auditorium",
-        description: "Join us for our annual Tech Symposium featuring keynote speakers from leading tech companies, panel discussions on emerging technologies, and networking opportunities with industry professionals. This full-day event covers AI, Web3, Cloud Computing, and more.",
-        organizer: "Code Warriors",
-        image: "{{ url_for('static', filename='images/club.jpg') }}"
-    },
-    2: {
-        title: "Cultural Fest",
-        category: "Cultural",
-        date: "November 5, 2025",
-        time: "3:00 PM - 10:00 PM",
-        location: "Open Grounds",
-        description: "Experience the vibrant diversity of our campus at the Annual Cultural Fest! Enjoy music performances, dance competitions, drama presentations, and art exhibitions. Food stalls featuring cuisines from around the world will be available.",
-        organizer: "Cultural Club",
-        image: "{{ url_for('static', filename='images/club.jpg') }}"
-    },
-    3: {
-        title: "Hackathon 48hrs",
-        category: "Competition",
-        date: "November 12-14, 2025",
-        time: "48 Hours Non-Stop",
-        location: "Computer Labs",
-        description: "Test your coding skills in this intense 48-hour hackathon! Form teams, build innovative solutions, and compete for prizes worth ₹1 Lakh. Mentorship from industry experts, free meals, and swag included.",
-        organizer: "Code Warriors",
-        image: "{{ url_for('static', filename='images/club.jpg') }}"
-    },
-    4: {
-        title: "AI Workshop Series",
-        category: "Workshop",
-        date: "November 18-20, 2025",
-        time: "2:00 PM - 5:00 PM",
-        location: "Lab 301",
-        description: "A comprehensive 3-day workshop series covering Machine Learning fundamentals, Deep Learning architectures, and practical AI applications. Hands-on sessions with real datasets.",
-        organizer: "Code Warriors",
-        image: "{{ url_for('static', filename='images/club.jpg') }}"
-    },
-    5: {
-        title: "Sports Meet 2025",
-        category: "Sports",
-        date: "December 2-4, 2025",
-        time: "8:00 AM - 6:00 PM",
-        location: "Sports Complex",
-        description: "Annual inter-college sports competition featuring cricket, football, basketball, badminton, and athletics. Represent your department and compete for the championship trophy.",
-        organizer: "Sports Committee",
-        image: "{{ url_for('static', filename='images/club.jpg') }}"
-    },
-    6: {
-        title: "Guest Lecture: ML in Healthcare",
-        category: "Seminar",
-        date: "December 10, 2025",
-        time: "4:00 PM - 6:00 PM",
-        location: "Seminar Hall",
-        description: "Distinguished guest lecture by Dr. Sarah Johnson from MIT on Machine Learning Applications in Healthcare. Learn about cutting-edge research in medical diagnosis and personalized medicine.",
-        organizer: "Astro Club",
-        image: "{{ url_for('static', filename='images/club.jpg') }}"
-    },
-    7: {
-        title: "Photography Contest",
-        category: "Competition",
-        date: "December 15, 2025",
-        time: "Submission Deadline",
-        location: "Online Submission",
-        description: "Capture the essence of campus life! Submit your best photographs in categories: Portrait, Landscape, Abstract, and Candid. Winners get cash prizes and featured exhibition.",
-        organizer: "Photography Club",
-        image: "{{ url_for('static', filename='images/club.jpg') }}"
-    },
-    8: {
-        title: "Annual Day Celebration",
-        category: "Cultural",
-        date: "January 8, 2026",
-        time: "6:00 PM - 10:00 PM",
-        location: "Main Auditorium",
-        description: "Grand celebration of achievements and talent! Features award ceremonies, cultural performances, alumni meet, and entertainment show. Chief Guest: Renowned entrepreneur Mr. Raj Malhotra.",
-        organizer: "Student Council",
-        image: "{{ url_for('static', filename='images/club.jpg') }}"
-    },
-    9: {
-        title: "Startup Pitch Day",
-        category: "Competition",
-        date: "January 15, 2026",
-        time: "10:00 AM - 4:00 PM",
-        location: "Innovation Hub",
-        description: "Present your startup ideas to investors and industry experts. Get feedback, funding opportunities, and mentorship. Top 3 pitches win seed funding and incubation support.",
-        organizer: "Entrepreneurship Cell",
-        image: "{{ url_for('static', filename='images/club.jpg') }}"
-    },
-    10: {
-        title: "Music Fest 2026",
-        category: "Cultural",
-        date: "January 22, 2026",
-        time: "5:00 PM - 11:00 PM",
-        location: "Amphitheater",
-        description: "Battle of the Bands! Local and college bands compete for the title. Enjoy live performances, food trucks, and merchandise stalls. Guest performance by popular indie band.",
-        organizer: "Music Club",
-        image: "{{ url_for('static', filename='images/club.jpg') }}"
-    },
-    11: {
-        title: "Career Fair",
-        category: "Professional",
-        date: "February 1, 2026",
-        time: "9:00 AM - 6:00 PM",
-        location: "Convention Center",
-        description: "Meet recruiters from top companies! 50+ companies hiring for internships and full-time positions. Bring multiple copies of your resume. Professional attire required.",
-        organizer: "Placement Cell",
-        image: "{{ url_for('static', filename='images/club.jpg') }}"
-    },
-    12: {
-        title: "Innovation Showcase",
-        category: "Exhibition",
-        date: "February 10, 2026",
-        time: "11:00 AM - 7:00 PM",
-        location: "Exhibition Hall",
-        description: "Students present their innovative projects and research work. Categories include AI/ML, IoT, Robotics, and Sustainability. Open to all departments. Prizes for best innovations.",
-        organizer: "Research Committee",
-        image: "{{ url_for('static', filename='images/club.jpg') }}"
-    }
+    {% for event in events %}
+    {{ event.id }}: {
+        title: {{ event.title|tojson }},
+        category: {{ event.category|tojson }},
+        date: {{ event.date|tojson }},
+        time: {{ event.time|tojson }},
+        location: {{ event.location|tojson }},
+        description: {{ event.description|tojson }},
+        organizer: {{ event.organizer|tojson }},
+        image: {{ event.image_url|tojson }}
+    }{% if not loop.last %},{% endif %}
+    {% endfor %}
 };
 
 // Modal functionality
@@ -413,8 +156,10 @@ const eventBricks = document.querySelectorAll('.event-brick');
 
 eventBricks.forEach(brick => {
     brick.addEventListener('click', function() {
-        const eventId = this.getAttribute('data-event');
+        const eventId = parseInt(this.getAttribute('data-event'));
         const event = eventData[eventId];
+        
+        if (!event) return;
         
         // Populate modal
         document.getElementById('modalImage').src = event.image;
@@ -425,6 +170,10 @@ eventBricks.forEach(brick => {
         document.getElementById('modalLocation').textContent = event.location;
         document.getElementById('modalDescription').textContent = event.description;
         document.getElementById('modalOrganizer').textContent = event.organizer;
+        
+        // Set organizer initials
+        const initials = event.organizer.split(' ').map(word => word[0]).join('').substring(0, 2).toUpperCase();
+        document.getElementById('organizerInitials').textContent = initials;
         
         // Show modal
         modal.classList.add('active');
@@ -454,14 +203,19 @@ document.querySelector('.btn-register').addEventListener('click', function() {
 });
 
 document.querySelector('.btn-share').addEventListener('click', function() {
+    const title = document.getElementById('modalTitle').textContent;
     if (navigator.share) {
         navigator.share({
-            title: document.getElementById('modalTitle').textContent,
+            title: title,
             text: 'Check out this event at IIIT Naya Raipur!',
             url: window.location.href
-        });
+        }).catch(err => console.log('Error sharing:', err));
     } else {
-        alert('Share functionality not supported on this browser.');
+        // Fallback: copy to clipboard
+        const url = window.location.href;
+        navigator.clipboard.writeText(url).then(() => {
+            alert('Link copied to clipboard!');
+        });
     }
 });
 </script>
