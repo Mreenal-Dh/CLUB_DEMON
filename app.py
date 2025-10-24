@@ -2,8 +2,18 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 import os
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
+import logging
+import sys
 
 app = Flask(__name__)
+
+# Enhanced logging configuration
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s %(levelname)s: %(message)s',
+    handlers=[logging.StreamHandler(sys.stdout)]
+)
+logger = logging.getLogger(__name__)
 
 # Configuration
 app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
@@ -44,6 +54,18 @@ class Club(db.Model):
     
     def __repr__(self):
         return f'<Club {self.name}>'
+    
+    def to_dict(self):
+        """Safe dictionary conversion with defaults"""
+        return {
+            'id': self.id,
+            'name': self.name or 'Unnamed Club',
+            'logo_url': self.logo_url or '',
+            'members_count': self.members_count or 0,
+            'description': self.description or 'No description available.',
+            'is_recruiting': bool(self.is_recruiting),
+            'application_link': self.application_link or ''
+        }
 
 class ClubMember(db.Model):
     __tablename__ = 'club_members'
@@ -63,13 +85,13 @@ class Event(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text, nullable=False)
-    category = db.Column(db.String(50), nullable=False)  # Technical, Cultural, Sports, etc.
-    date = db.Column(db.String(50), nullable=False)  # e.g., "October 25, 2025"
-    time = db.Column(db.String(50), nullable=False)  # e.g., "9:00 AM - 5:00 PM"
+    category = db.Column(db.String(50), nullable=False)
+    date = db.Column(db.String(50), nullable=False)
+    time = db.Column(db.String(50), nullable=False)
     location = db.Column(db.String(200), nullable=False)
-    organizer = db.Column(db.String(100), nullable=False)  # Club name
+    organizer = db.Column(db.String(100), nullable=False)
     image_url = db.Column(db.String(200), nullable=True)
-    size_class = db.Column(db.String(20), default='size-medium')  # size-small, size-medium, size-large, size-wide, size-tall
+    size_class = db.Column(db.String(20), default='size-medium')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     def __repr__(self):
@@ -81,146 +103,98 @@ MANAGER_CREDENTIALS = {
     'password': os.environ.get('MANAGER_PASSWORD', 'adminpass')
 }
 
+# ==================== ERROR HANDLERS ====================
+
+@app.errorhandler(404)
+def not_found_error(error):
+    logger.error(f"404 Error: {error}")
+    return render_template('404.html'), 404
+
+@app.errorhandler(500)
+def internal_error(error):
+    logger.error(f"500 Error: {error}")
+    db.session.rollback()
+    return render_template('500.html'), 500
+
 # ==================== INITIALIZATION ====================
 
 def init_db():
     with app.app_context():
-        db.create_all()
-        
-        # Seed clubs if empty
-        if Club.query.count() == 0:
-            clubs_data = [
-                {
-                    'name': 'Astro Club',
-                    'description': 'Exploring the cosmos and celestial wonders through stargazing sessions, astrophotography workshops, and discussions on space exploration.',
-                    'members_count': 45,
-                    'is_recruiting': True,
-                    'application_link': ''
-                },
-                {
-                    'name': 'Code Warriors',
-                    'description': 'Programming competitions, hackathons, and software development projects. Join us to enhance your coding skills and build amazing applications.',
-                    'members_count': 78,
-                    'is_recruiting': False,
-                    'application_link': ''
-                },
-                {
-                    'name': 'Cultural Club',
-                    'description': 'Celebrating diversity through arts, music, dance, and cultural events. Experience the vibrant traditions from around the world.',
-                    'members_count': 92,
-                    'is_recruiting': True,
-                    'application_link': 'https://forms.gle/example'
-                }
-            ]
+        try:
+            db.create_all()
+            logger.info("Database tables created successfully")
             
-            for club_data in clubs_data:
-                club = Club(**club_data)
-                db.session.add(club)
+            # Seed clubs if empty
+            if Club.query.count() == 0:
+                clubs_data = [
+                    {
+                        'name': 'Astro Club',
+                        'description': 'Exploring the cosmos and celestial wonders through stargazing sessions, astrophotography workshops, and discussions on space exploration.',
+                        'members_count': 45,
+                        'is_recruiting': True,
+                        'application_link': ''
+                    },
+                    {
+                        'name': 'Code Warriors',
+                        'description': 'Programming competitions, hackathons, and software development projects. Join us to enhance your coding skills and build amazing applications.',
+                        'members_count': 78,
+                        'is_recruiting': False,
+                        'application_link': ''
+                    },
+                    {
+                        'name': 'Cultural Club',
+                        'description': 'Celebrating diversity through arts, music, dance, and cultural events. Experience the vibrant traditions from around the world.',
+                        'members_count': 92,
+                        'is_recruiting': True,
+                        'application_link': 'https://forms.gle/example'
+                    }
+                ]
+                
+                for club_data in clubs_data:
+                    club = Club(**club_data)
+                    db.session.add(club)
+                
+                db.session.commit()
+                logger.info(f"Seeded {len(clubs_data)} clubs")
             
-            db.session.commit()
-            print(f"✓ Seeded {len(clubs_data)} clubs")
-        
-        # Seed events if empty
-        if Event.query.count() == 0:
-            events_data = [
-                {
-                    'title': 'Tech Symposium 2025',
-                    'description': 'Join us for our annual Tech Symposium featuring keynote speakers from leading tech companies, panel discussions on emerging technologies, and networking opportunities with industry professionals. This full-day event covers AI, Web3, Cloud Computing, and more.',
-                    'category': 'Technical',
-                    'date': 'October 25, 2025',
-                    'time': '9:00 AM - 5:00 PM',
-                    'location': 'Main Auditorium',
-                    'organizer': 'Code Warriors',
-                    'image_url': '/static/images/club.jpg',
-                    'size_class': 'size-large'
-                },
-                {
-                    'title': 'Cultural Fest',
-                    'description': 'Experience the vibrant diversity of our campus at the Annual Cultural Fest! Enjoy music performances, dance competitions, drama presentations, and art exhibitions. Food stalls featuring cuisines from around the world will be available.',
-                    'category': 'Cultural',
-                    'date': 'November 5, 2025',
-                    'time': '3:00 PM - 10:00 PM',
-                    'location': 'Open Grounds',
-                    'organizer': 'Cultural Club',
-                    'image_url': '/static/images/club.jpg',
-                    'size_class': 'size-medium'
-                },
-                {
-                    'title': 'Hackathon 48hrs',
-                    'description': 'Test your coding skills in this intense 48-hour hackathon! Form teams, build innovative solutions, and compete for prizes worth ₹1 Lakh. Mentorship from industry experts, free meals, and swag included.',
-                    'category': 'Competition',
-                    'date': 'November 12-14, 2025',
-                    'time': '48 Hours Non-Stop',
-                    'location': 'Computer Labs',
-                    'organizer': 'Code Warriors',
-                    'image_url': '/static/images/club.jpg',
-                    'size_class': 'size-small'
-                },
-                {
-                    'title': 'AI Workshop Series',
-                    'description': 'A comprehensive 3-day workshop series covering Machine Learning fundamentals, Deep Learning architectures, and practical AI applications. Hands-on sessions with real datasets.',
-                    'category': 'Workshop',
-                    'date': 'November 18-20, 2025',
-                    'time': '2:00 PM - 5:00 PM',
-                    'location': 'Lab 301',
-                    'organizer': 'Code Warriors',
-                    'image_url': '/static/images/club.jpg',
-                    'size_class': 'size-wide'
-                },
-                {
-                    'title': 'Sports Meet 2025',
-                    'description': 'Annual inter-college sports competition featuring cricket, football, basketball, badminton, and athletics. Represent your department and compete for the championship trophy.',
-                    'category': 'Sports',
-                    'date': 'December 2-4, 2025',
-                    'time': '8:00 AM - 6:00 PM',
-                    'location': 'Sports Complex',
-                    'organizer': 'Sports Committee',
-                    'image_url': '/static/images/club.jpg',
-                    'size_class': 'size-medium'
-                },
-                {
-                    'title': 'Guest Lecture: ML in Healthcare',
-                    'description': 'Distinguished guest lecture by Dr. Sarah Johnson from MIT on Machine Learning Applications in Healthcare. Learn about cutting-edge research in medical diagnosis and personalized medicine.',
-                    'category': 'Seminar',
-                    'date': 'December 10, 2025',
-                    'time': '4:00 PM - 6:00 PM',
-                    'location': 'Seminar Hall',
-                    'organizer': 'Astro Club',
-                    'image_url': '/static/images/club.jpg',
-                    'size_class': 'size-tall'
-                },
-                {
-                    'title': 'Photography Contest',
-                    'description': 'Capture the essence of campus life! Submit your best photographs in categories: Portrait, Landscape, Abstract, and Candid. Winners get cash prizes and featured exhibition.',
-                    'category': 'Competition',
-                    'date': 'December 15, 2025',
-                    'time': 'Submission Deadline',
-                    'location': 'Online Submission',
-                    'organizer': 'Photography Club',
-                    'image_url': '/static/images/club.jpg',
-                    'size_class': 'size-small'
-                },
-                {
-                    'title': 'Annual Day Celebration',
-                    'description': 'Grand celebration of achievements and talent! Features award ceremonies, cultural performances, alumni meet, and entertainment show. Chief Guest: Renowned entrepreneur Mr. Raj Malhotra.',
-                    'category': 'Cultural',
-                    'date': 'January 8, 2026',
-                    'time': '6:00 PM - 10:00 PM',
-                    'location': 'Main Auditorium',
-                    'organizer': 'Student Council',
-                    'image_url': '/static/images/club.jpg',
-                    'size_class': 'size-large'
-                }
-            ]
+            # Seed events if empty
+            if Event.query.count() == 0:
+                events_data = [
+                    {
+                        'title': 'Tech Symposium 2025',
+                        'description': 'Join us for our annual Tech Symposium featuring keynote speakers from leading tech companies, panel discussions on emerging technologies, and networking opportunities with industry professionals.',
+                        'category': 'Technical',
+                        'date': 'October 25, 2025',
+                        'time': '9:00 AM - 5:00 PM',
+                        'location': 'Main Auditorium',
+                        'organizer': 'Code Warriors',
+                        'image_url': '/static/images/club.jpg',
+                        'size_class': 'size-large'
+                    },
+                    {
+                        'title': 'Cultural Fest',
+                        'description': 'Experience the vibrant diversity of our campus at the Annual Cultural Fest!',
+                        'category': 'Cultural',
+                        'date': 'November 5, 2025',
+                        'time': '3:00 PM - 10:00 PM',
+                        'location': 'Open Grounds',
+                        'organizer': 'Cultural Club',
+                        'image_url': '/static/images/club.jpg',
+                        'size_class': 'size-medium'
+                    }
+                ]
+                
+                for event_data in events_data:
+                    event = Event(**event_data)
+                    db.session.add(event)
+                
+                db.session.commit()
+                logger.info(f"Seeded {len(events_data)} events")
             
-            for event_data in events_data:
-                event = Event(**event_data)
-                db.session.add(event)
-            
-            db.session.commit()
-            print(f"✓ Seeded {len(events_data)} events")
-        
-        print("Database initialization complete!")
+            logger.info("Database initialization complete!")
+        except Exception as e:
+            logger.error(f"Database initialization error: {str(e)}", exc_info=True)
+            raise
 
 # ==================== PUBLIC ROUTES ====================
 
@@ -256,18 +230,58 @@ def about():
 
 @app.route('/events')
 def events():
-    events_list = Event.query.order_by(Event.created_at.desc()).all()
-    return render_template('events.html', events=events_list)
+    try:
+        events_list = Event.query.order_by(Event.created_at.desc()).all()
+        logger.info(f"Fetched {len(events_list)} events")
+        return render_template('events.html', events=events_list)
+    except Exception as e:
+        logger.error(f"Error in events route: {str(e)}", exc_info=True)
+        flash('Error loading events', 'error')
+        return render_template('events.html', events=[])
 
 @app.route('/clubs')
 def clubs():
-    clubs_list = Club.query.all()
-    return render_template('clubs.html', clubs=clubs_list)
+    try:
+        clubs_list = Club.query.all()
+        logger.info(f"Fetched {len(clubs_list)} clubs")
+        return render_template('clubs.html', clubs=clubs_list)
+    except Exception as e:
+        logger.error(f"Error in clubs route: {str(e)}", exc_info=True)
+        flash('Error loading clubs', 'error')
+        return render_template('clubs.html', clubs=[])
 
 @app.route('/club/<int:club_id>')
 def club_detail(club_id):
-    club = Club.query.get_or_404(club_id)
-    return render_template('club_detail.html', club=club)
+    try:
+        logger.info(f"Attempting to fetch club with ID: {club_id}")
+        
+        # Fetch club
+        club = Club.query.get(club_id)
+        
+        if not club:
+            logger.warning(f"Club with ID {club_id} not found")
+            flash(f'Club not found', 'error')
+            return redirect(url_for('clubs'))
+        
+        logger.info(f"Successfully fetched club: {club.name}")
+        logger.debug(f"Club data: {club.to_dict()}")
+        
+        # Ensure all fields have safe values
+        if not club.name:
+            club.name = f"Club {club_id}"
+        if club.description is None:
+            club.description = "No description available."
+        if club.members_count is None:
+            club.members_count = 0
+        if club.is_recruiting is None:
+            club.is_recruiting = False
+            
+        return render_template('club_detail.html', club=club)
+        
+    except Exception as e:
+        logger.error(f"Error in club_detail for ID {club_id}: {str(e)}", exc_info=True)
+        flash('Error loading club details', 'error')
+        return redirect(url_for('clubs'))
 
 # ==================== MANAGER AUTHENTICATION ====================
 
@@ -296,18 +310,25 @@ def manager_logout():
 @app.route('/manager/dashboard')
 @manager_required
 def manager_dashboard():
-    clubs_list = Club.query.all()
-    events_list = Event.query.order_by(Event.created_at.desc()).all()
-    total_clubs = len(clubs_list)
-    total_members = sum(club.members_count for club in clubs_list)
-    total_events = len(events_list)
-    
-    return render_template('manager_dashboard.html', 
-                         clubs=clubs_list,
-                         events=events_list,
-                         total_clubs=total_clubs, 
-                         total_members=total_members,
-                         total_events=total_events)
+    try:
+        clubs_list = Club.query.all()
+        events_list = Event.query.order_by(Event.created_at.desc()).all()
+        total_clubs = len(clubs_list)
+        total_members = sum(club.members_count or 0 for club in clubs_list)
+        total_events = len(events_list)
+        
+        return render_template('manager_dashboard.html', 
+                             clubs=clubs_list,
+                             events=events_list,
+                             total_clubs=total_clubs, 
+                             total_members=total_members,
+                             total_events=total_events)
+    except Exception as e:
+        logger.error(f"Error in manager_dashboard: {str(e)}", exc_info=True)
+        flash('Error loading dashboard', 'error')
+        return render_template('manager_dashboard.html', 
+                             clubs=[], events=[], 
+                             total_clubs=0, total_members=0, total_events=0)
 
 # ==================== CLUB MANAGEMENT ====================
 
@@ -317,19 +338,24 @@ def manager_edit_club(club_id):
     club = Club.query.get_or_404(club_id)
     
     if request.method == 'POST':
-        club.name = request.form.get('name', club.name)
-        club.description = request.form.get('description', club.description)
-        club.logo_url = request.form.get('logo_url', club.logo_url)
         try:
-            club.members_count = int(request.form.get('members_count', club.members_count))
-        except ValueError:
-            pass
-        club.is_recruiting = bool(request.form.get('is_recruiting'))
-        club.application_link = request.form.get('application_link', '')
-        
-        db.session.commit()
-        flash('Club updated successfully!', 'success')
-        return redirect(url_for('manager_dashboard'))
+            club.name = request.form.get('name', club.name)
+            club.description = request.form.get('description', club.description)
+            club.logo_url = request.form.get('logo_url', club.logo_url)
+            try:
+                club.members_count = int(request.form.get('members_count', club.members_count))
+            except ValueError:
+                pass
+            club.is_recruiting = bool(request.form.get('is_recruiting'))
+            club.application_link = request.form.get('application_link', '')
+            
+            db.session.commit()
+            flash('Club updated successfully!', 'success')
+            return redirect(url_for('manager_dashboard'))
+        except Exception as e:
+            logger.error(f"Error updating club: {str(e)}", exc_info=True)
+            db.session.rollback()
+            flash('Error updating club', 'error')
     
     return render_template('club_edit.html', club=club)
 
@@ -337,29 +363,40 @@ def manager_edit_club(club_id):
 @manager_required
 def manager_new_club():
     if request.method == 'POST':
-        new_club = Club(
-            name=request.form.get('name', 'New Club'),
-            description=request.form.get('description', ''),
-            logo_url=request.form.get('logo_url', ''),
-            members_count=int(request.form.get('members_count', 0) or 0),
-            is_recruiting=bool(request.form.get('is_recruiting')),
-            application_link=request.form.get('application_link', '')
-        )
-        
-        db.session.add(new_club)
-        db.session.commit()
-        flash('New club created successfully!', 'success')
-        return redirect(url_for('manager_dashboard'))
+        try:
+            new_club = Club(
+                name=request.form.get('name', 'New Club'),
+                description=request.form.get('description', ''),
+                logo_url=request.form.get('logo_url', ''),
+                members_count=int(request.form.get('members_count', 0) or 0),
+                is_recruiting=bool(request.form.get('is_recruiting')),
+                application_link=request.form.get('application_link', '')
+            )
+            
+            db.session.add(new_club)
+            db.session.commit()
+            flash('New club created successfully!', 'success')
+            return redirect(url_for('manager_dashboard'))
+        except Exception as e:
+            logger.error(f"Error creating club: {str(e)}", exc_info=True)
+            db.session.rollback()
+            flash('Error creating club', 'error')
     
     return render_template('club_edit.html', club=None)
 
 @app.route('/manager/club/<int:club_id>/delete', methods=['POST'])
 @manager_required
 def manager_delete_club(club_id):
-    club = Club.query.get_or_404(club_id)
-    db.session.delete(club)
-    db.session.commit()
-    flash('Club deleted successfully!', 'success')
+    try:
+        club = Club.query.get_or_404(club_id)
+        db.session.delete(club)
+        db.session.commit()
+        flash('Club deleted successfully!', 'success')
+    except Exception as e:
+        logger.error(f"Error deleting club: {str(e)}", exc_info=True)
+        db.session.rollback()
+        flash('Error deleting club', 'error')
+    
     return redirect(url_for('manager_dashboard'))
 
 # ==================== EVENT MANAGEMENT ====================
@@ -370,19 +407,24 @@ def manager_edit_event(event_id):
     event = Event.query.get_or_404(event_id)
     
     if request.method == 'POST':
-        event.title = request.form.get('title', event.title)
-        event.description = request.form.get('description', event.description)
-        event.category = request.form.get('category', event.category)
-        event.date = request.form.get('date', event.date)
-        event.time = request.form.get('time', event.time)
-        event.location = request.form.get('location', event.location)
-        event.organizer = request.form.get('organizer', event.organizer)
-        event.image_url = request.form.get('image_url', event.image_url)
-        event.size_class = request.form.get('size_class', event.size_class)
-        
-        db.session.commit()
-        flash('Event updated successfully!', 'success')
-        return redirect(url_for('manager_dashboard'))
+        try:
+            event.title = request.form.get('title', event.title)
+            event.description = request.form.get('description', event.description)
+            event.category = request.form.get('category', event.category)
+            event.date = request.form.get('date', event.date)
+            event.time = request.form.get('time', event.time)
+            event.location = request.form.get('location', event.location)
+            event.organizer = request.form.get('organizer', event.organizer)
+            event.image_url = request.form.get('image_url', event.image_url)
+            event.size_class = request.form.get('size_class', event.size_class)
+            
+            db.session.commit()
+            flash('Event updated successfully!', 'success')
+            return redirect(url_for('manager_dashboard'))
+        except Exception as e:
+            logger.error(f"Error updating event: {str(e)}", exc_info=True)
+            db.session.rollback()
+            flash('Error updating event', 'error')
     
     return render_template('event_edit.html', event=event)
 
@@ -390,32 +432,43 @@ def manager_edit_event(event_id):
 @manager_required
 def manager_new_event():
     if request.method == 'POST':
-        new_event = Event(
-            title=request.form.get('title', 'New Event'),
-            description=request.form.get('description', ''),
-            category=request.form.get('category', 'General'),
-            date=request.form.get('date', ''),
-            time=request.form.get('time', ''),
-            location=request.form.get('location', ''),
-            organizer=request.form.get('organizer', ''),
-            image_url=request.form.get('image_url', '/static/images/club.jpg'),
-            size_class=request.form.get('size_class', 'size-medium')
-        )
-        
-        db.session.add(new_event)
-        db.session.commit()
-        flash('New event created successfully!', 'success')
-        return redirect(url_for('manager_dashboard'))
+        try:
+            new_event = Event(
+                title=request.form.get('title', 'New Event'),
+                description=request.form.get('description', ''),
+                category=request.form.get('category', 'General'),
+                date=request.form.get('date', ''),
+                time=request.form.get('time', ''),
+                location=request.form.get('location', ''),
+                organizer=request.form.get('organizer', ''),
+                image_url=request.form.get('image_url', '/static/images/club.jpg'),
+                size_class=request.form.get('size_class', 'size-medium')
+            )
+            
+            db.session.add(new_event)
+            db.session.commit()
+            flash('New event created successfully!', 'success')
+            return redirect(url_for('manager_dashboard'))
+        except Exception as e:
+            logger.error(f"Error creating event: {str(e)}", exc_info=True)
+            db.session.rollback()
+            flash('Error creating event', 'error')
     
     return render_template('event_edit.html', event=None)
 
 @app.route('/manager/event/<int:event_id>/delete', methods=['POST'])
 @manager_required
 def manager_delete_event(event_id):
-    event = Event.query.get_or_404(event_id)
-    db.session.delete(event)
-    db.session.commit()
-    flash('Event deleted successfully!', 'success')
+    try:
+        event = Event.query.get_or_404(event_id)
+        db.session.delete(event)
+        db.session.commit()
+        flash('Event deleted successfully!', 'success')
+    except Exception as e:
+        logger.error(f"Error deleting event: {str(e)}", exc_info=True)
+        db.session.rollback()
+        flash('Error deleting event', 'error')
+    
     return redirect(url_for('manager_dashboard'))
 
 # ==================== HEALTH CHECK ====================
@@ -423,10 +476,10 @@ def manager_delete_event(event_id):
 @app.route('/health')
 def health():
     try:
-        # Test database connection
         db.session.execute('SELECT 1')
         return {'status': 'healthy', 'database': 'connected'}, 200
     except Exception as e:
+        logger.error(f"Health check failed: {str(e)}")
         return {'status': 'unhealthy', 'database': 'disconnected', 'error': str(e)}, 500
 
 # ==================== RUN ====================
