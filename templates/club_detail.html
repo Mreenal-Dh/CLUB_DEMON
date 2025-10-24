@@ -1,9 +1,8 @@
 {% extends 'base.html' %}
-{% block title %}{{ club.name }}{% endblock %}
+{% block title %}{{ club.name if club else 'Club Details' }}{% endblock %}
 
 {% block content %}
 <script>
-    // Add club-detail-bg class to bg-layer when page loads
     document.addEventListener('DOMContentLoaded', function() {
         const bgLayer = document.querySelector('.bg-layer');
         if (bgLayer) {
@@ -16,11 +15,11 @@
     <!-- Hero Section with Club Header -->
     <section class="club-hero">
         <div class="club-hero-content">
-            {% if club.get('logo_url') %}
+            {% if club.logo_url %}
             <img src="{{ club.logo_url }}" alt="{{ club.name }} Logo" class="club-logo-large">
             {% else %}
             <div class="club-logo-placeholder">
-                <span>{{ club.name[0] }}</span>
+                <span>{{ club.name[0] if club.name else 'C' }}</span>
             </div>
             {% endif %}
             
@@ -34,7 +33,7 @@
                             <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
                             <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                         </svg>
-                        {{ club.members_count }} Members
+                        {{ club.members_count if club.members_count else 0 }} Members
                     </span>
                     <span class="meta-item recruiting-status {% if club.is_recruiting %}recruiting{% else %}closed{% endif %}">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -71,7 +70,7 @@
                     </svg>
                     About the Club
                 </h2>
-                <p class="club-description">{{ club.description }}</p>
+                <p class="club-description">{{ club.description if club.description else 'No description available.' }}</p>
             </section>
 
             <!-- Gallery Section -->
@@ -86,42 +85,14 @@
                 </h2>
                 <div class="gallery-container">
                     <div class="gallery-grid">
+                        {% for i in range(1, 7) %}
                         <div class="gallery-item">
-                            <img src="{{ url_for('static', filename='images/club.jpg') }}" alt="Gallery 1">
+                            <img src="{{ url_for('static', filename='images/club.jpg') }}" alt="Gallery {{ i }}">
                             <div class="gallery-overlay">
                                 <span class="gallery-icon">🔍</span>
                             </div>
                         </div>
-                        <div class="gallery-item">
-                            <img src="{{ url_for('static', filename='images/club.jpg') }}" alt="Gallery 2">
-                            <div class="gallery-overlay">
-                                <span class="gallery-icon">🔍</span>
-                            </div>
-                        </div>
-                        <div class="gallery-item">
-                            <img src="{{ url_for('static', filename='images/club.jpg') }}" alt="Gallery 3">
-                            <div class="gallery-overlay">
-                                <span class="gallery-icon">🔍</span>
-                            </div>
-                        </div>
-                        <div class="gallery-item">
-                            <img src="{{ url_for('static', filename='images/club.jpg') }}" alt="Gallery 4">
-                            <div class="gallery-overlay">
-                                <span class="gallery-icon">🔍</span>
-                            </div>
-                        </div>
-                        <div class="gallery-item">
-                            <img src="{{ url_for('static', filename='images/club.jpg') }}" alt="Gallery 5">
-                            <div class="gallery-overlay">
-                                <span class="gallery-icon">🔍</span>
-                            </div>
-                        </div>
-                        <div class="gallery-item">
-                            <img src="{{ url_for('static', filename='images/club.jpg') }}" alt="Gallery 6">
-                            <div class="gallery-overlay">
-                                <span class="gallery-icon">🔍</span>
-                            </div>
-                        </div>
+                        {% endfor %}
                     </div>
                 </div>
             </section>
@@ -218,8 +189,8 @@
                 </h2>
                 {% if club.is_recruiting %}
                     <p class="join-message">We're currently looking for enthusiastic members to join our community!</p>
-                    {% if club.get('application_link') %}
-                    <a href="{{ club.application_link }}" target="_blank" class="join-button">
+                    {% if club.application_link %}
+                    <a href="{{ club.application_link }}" target="_blank" rel="noopener noreferrer" class="join-button">
                         Apply Now
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -265,7 +236,7 @@
                 </h2>
                 <div class="stats-list">
                     <div class="stat-item">
-                        <span class="stat-value">{{ club.members_count }}</span>
+                        <span class="stat-value">{{ club.members_count if club.members_count else 0 }}</span>
                         <span class="stat-label">Active Members</span>
                     </div>
                     <div class="stat-item">
