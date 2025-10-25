@@ -1,0 +1,371 @@
+{% extends 'base.html' %}
+{% block title %}Manage {{ club.name }} Members{% endblock %}
+
+{% block content %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const bgLayer = document.querySelector('.bg-layer');
+        if (bgLayer) {
+            bgLayer.classList.add('club-detail-bg');
+        }
+    });
+</script>
+
+<section class="form-page">
+    <div class="form-container">
+        <div class="form-header">
+            <h1>Manage Core Team - {{ club.name }}</h1>
+            <a href="{{ url_for('manager_dashboard') }}" class="btn-back">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                    <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
+                Back to Dashboard
+            </a>
+        </div>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">
+                            {{ message }}
+                            <button class="alert-close" onclick="this.parentElement.remove()">×</button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- Add New Member Form -->
+        <div class="members-section">
+            <h2 class="section-subtitle">Add New Member</h2>
+            <form method="POST" action="{{ url_for('manager_add_member', club_id=club.id) }}" class="member-form">
+                <div class="form-grid-inline">
+                    <div class="form-group">
+                        <label for="name">Member Name *</label>
+                        <input type="text" id="name" name="name" required placeholder="e.g., John Doe">
+                    </div>
+                    <div class="form-group">
+                        <label for="role">Role/Position *</label>
+                        <select id="role" name="role" required>
+                            <option value="">Select Role</option>
+                            <option value="President">President</option>
+                            <option value="Vice President">Vice President</option>
+                            <option value="Secretary">Secretary</option>
+                            <option value="Treasurer">Treasurer</option>
+                            <option value="Technical Lead">Technical Lead</option>
+                            <option value="Creative Lead">Creative Lead</option>
+                            <option value="Marketing Lead">Marketing Lead</option>
+                            <option value="Core Member">Core Member</option>
+                            <option value="Team Member">Team Member</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="btn-add">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                            Add Member
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Current Members List -->
+        <div class="members-section">
+            <h2 class="section-subtitle">Current Core Team ({{ members|length }})</h2>
+            
+            {% if members %}
+            <div class="members-list">
+                {% for member in members %}
+                <div class="member-card">
+                    <div class="member-info">
+                        <div class="member-avatar">
+                            <span>{{ member.name[:2].upper() }}</span>
+                        </div>
+                        <div class="member-details">
+                            <h3>{{ member.name }}</h3>
+                            <p>{{ member.role }}</p>
+                            <small>Joined {{ member.joined_at.strftime('%B %d, %Y') if member.joined_at else 'Unknown' }}</small>
+                        </div>
+                    </div>
+                    <div class="member-actions">
+                        <button class="btn-icon-edit" onclick="editMember({{ member.id }}, '{{ member.name }}', '{{ member.role }}')">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                            </svg>
+                        </button>
+                        <form method="POST" action="{{ url_for('manager_delete_member', club_id=club.id, member_id=member.id) }}" style="display:inline;" onsubmit="return confirm('Remove {{ member.name }} from core team?');">
+                            <button type="submit" class="btn-icon-delete">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                </svg>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="no-members">
+                <p>No core team members added yet. Add members above to display them on the club detail page.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<!-- Edit Member Modal -->
+<div id="editModal" class="edit-modal">
+    <div class="edit-modal-content">
+        <h3>Edit Member</h3>
+        <form method="POST" id="editForm" action="">
+            <div class="form-group">
+                <label for="edit_name">Name *</label>
+                <input type="text" id="edit_name" name="name" required>
+            </div>
+            <div class="form-group">
+                <label for="edit_role">Role *</label>
+                <select id="edit_role" name="role" required>
+                    <option value="President">President</option>
+                    <option value="Vice President">Vice President</option>
+                    <option value="Secretary">Secretary</option>
+                    <option value="Treasurer">Treasurer</option>
+                    <option value="Technical Lead">Technical Lead</option>
+                    <option value="Creative Lead">Creative Lead</option>
+                    <option value="Marketing Lead">Marketing Lead</option>
+                    <option value="Core Member">Core Member</option>
+                    <option value="Team Member">Team Member</option>
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button type="submit" class="btn-submit">Save Changes</button>
+                <button type="button" class="btn-cancel" onclick="closeEditModal()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function editMember(id, name, role) {
+    document.getElementById('edit_name').value = name;
+    document.getElementById('edit_role').value = role;
+    document.getElementById('editForm').action = '{{ url_for("manager_edit_member", club_id=club.id, member_id=0) }}'.replace('/0', '/' + id);
+    document.getElementById('editModal').style.display = 'flex';
+}
+
+function closeEditModal() {
+    document.getElementById('editModal').style.display = 'none';
+}
+
+// Close modal when clicking outside
+document.getElementById('editModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeEditModal();
+    }
+});
+</script>
+
+<style>
+.members-section {
+    margin-bottom: 40px;
+}
+
+.section-subtitle {
+    font-size: 20px;
+    color: var(--text-100);
+    margin: 0 0 20px 0;
+    font-weight: 700;
+}
+
+.member-form {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 24px;
+}
+
+.form-grid-inline {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 16px;
+    align-items: end;
+}
+
+.btn-add {
+    padding: 12px 24px;
+    background: linear-gradient(135deg, rgba(70,130,255,0.9), rgba(90,150,255,0.7));
+    border: 1px solid rgba(70,130,255,0.3);
+    color: white;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s;
+    white-space: nowrap;
+}
+
+.btn-add:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(70,130,255,0.4);
+}
+
+.members-list {
+    display: grid;
+    gap: 16px;
+}
+
+.member-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    transition: all 0.3s;
+}
+
+.member-card:hover {
+    background: rgba(255,255,255,0.05);
+    border-color: rgba(255,255,255,0.12);
+}
+
+.member-info {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.member-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(70,130,255,0.3), rgba(90,150,255,0.15));
+    border: 2px solid rgba(255,255,255,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-100);
+}
+
+.member-details h3 {
+    margin: 0 0 4px 0;
+    font-size: 18px;
+    color: var(--text-100);
+    font-weight: 700;
+}
+
+.member-details p {
+    margin: 0 0 4px 0;
+    font-size: 14px;
+    color: rgba(70,130,255,0.9);
+    font-weight: 600;
+}
+
+.member-details small {
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.member-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-icon-edit,
+.btn-icon-delete {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.05);
+    color: var(--text-100);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+}
+
+.btn-icon-edit:hover {
+    background: rgba(70,130,255,0.2);
+    border-color: rgba(70,130,255,0.4);
+}
+
+.btn-icon-delete {
+    border-color: rgba(248,113,113,0.3);
+}
+
+.btn-icon-delete:hover {
+    background: rgba(248,113,113,0.2);
+    border-color: rgba(248,113,113,0.5);
+}
+
+.no-members {
+    text-align: center;
+    padding: 40px;
+    color: var(--muted);
+}
+
+.edit-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.8);
+    backdrop-filter: blur(4px);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.edit-modal-content {
+    background: linear-gradient(135deg, rgba(12,16,22,0.98), rgba(18,24,33,0.98));
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 16px;
+    padding: 32px;
+    max-width: 500px;
+    width: 100%;
+}
+
+.edit-modal-content h3 {
+    margin: 0 0 24px 0;
+    font-size: 24px;
+    color: var(--text-100);
+}
+
+.modal-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+@media (max-width: 768px) {
+    .form-grid-inline {
+        grid-template-columns: 1fr;
+    }
+    
+    .member-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+    
+    .member-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+}
+</style>
+{% endblock %}
