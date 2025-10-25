@@ -3310,3 +3310,161 @@ h1::after {
         margin-bottom: 20px;
     }
 }
+/* ===== BACKGROUND IMAGE FIXES ===== */
+
+/* Base background layer - applies to all pages */
+.bg-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background-image:
+        linear-gradient(180deg, rgba(3,8,15,0.75), rgba(8,12,18,0.75)),
+        url("/static/images/IMG_0740.jpg");
+    background-blend-mode: overlay, normal;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;  /* Keeps background fixed during scroll */
+    pointer-events: none;
+    will-change: background-position;
+}
+
+/* Alternative: If you want repeating pattern instead of cover */
+.bg-layer.pattern-repeat {
+    background-size: 800px auto;  /* Adjust size as needed */
+    background-repeat: repeat;
+    background-attachment: scroll;
+}
+
+/* Club detail page background - different image */
+.bg-layer.club-detail-bg {
+    background-image:
+        linear-gradient(180deg, rgba(3,8,15,0.75), rgba(8,12,18,0.75)),
+        url("/static/images/club_info_bg1.jpg");
+    background-attachment: fixed;
+}
+
+/* Ensure background covers entire viewport height */
+html, body {
+    min-height: 100vh;
+    position: relative;
+}
+
+/* Make sure main content sits above background */
+main {
+    position: relative;
+    z-index: 10;
+    min-height: calc(100vh - var(--footer-height));
+}
+
+/* ===== ADDITIONAL HORIZONTAL SIZE OPTIONS ===== */
+
+/* Extra wide - spans 3 columns */
+.event-brick.size-extra-wide {
+    grid-row: span 2;
+    grid-column: span 3;
+}
+
+/* Super wide - full width */
+.event-brick.size-super-wide {
+    grid-row: span 3;
+    grid-column: span 4;
+}
+
+/* Wide tall - 2 columns, 3 rows */
+.event-brick.size-wide-tall {
+    grid-row: span 3;
+    grid-column: span 2;
+}
+
+/* Square large - 2x2 */
+.event-brick.size-square-large {
+    grid-row: span 2;
+    grid-column: span 2;
+}
+
+/* Responsive adjustments for new sizes */
+@media (max-width: 1200px) {
+    .event-brick.size-extra-wide,
+    .event-brick.size-super-wide {
+        grid-column: span 2;
+    }
+}
+
+@media (max-width: 768px) {
+    .event-brick.size-extra-wide,
+    .event-brick.size-super-wide,
+    .event-brick.size-wide-tall,
+    .event-brick.size-square-large {
+        grid-column: span 1;
+    }
+}
+
+/* ===== LOGIN PAGE BACKGROUND FIX ===== */
+
+/* Ensure login page shows background */
+.login-wrapper {
+    position: relative;
+    z-index: 10;
+    min-height: calc(100vh - var(--footer-height));
+}
+
+/* Make sure background is visible on login */
+body:has(.login-wrapper) .bg-layer {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* ===== HOME PAGE BACKGROUND FIX ===== */
+
+/* Ensure home page elements don't block background */
+.scroll-container {
+    background: transparent;
+}
+
+.scroll-section {
+    background: transparent;
+}
+
+/* Make hero section slightly transparent to show background */
+.hero {
+    background: linear-gradient(135deg, rgba(12,16,22,0.92), rgba(18,24,33,0.88));
+}
+
+/* ===== EVENTS PAGE BACKGROUND FIX ===== */
+
+/* Ensure events page has proper height */
+.events-page {
+    min-height: calc(100vh - var(--footer-height));
+    position: relative;
+    z-index: 10;
+}
+
+/* Make events grid background slightly transparent */
+.events-masonry-grid {
+    background: transparent;
+}
+
+.event-brick {
+    /* Cards remain solid but background shows through gaps */
+    position: relative;
+}
+
+/* ===== ALTERNATIVE SOLUTION: Gradient Fade at Bottom ===== */
+
+/* If you prefer gradient fade instead of repeating background */
+.bg-layer::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 300px;
+    background: linear-gradient(to bottom, transparent, rgba(8,12,18,1));
+    pointer-events: none;
+}
+
+/* Remove gradient fade if using repeat pattern */
+.bg-layer.pattern-repeat::after {
+    display: none;
+}
