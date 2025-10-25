@@ -142,34 +142,47 @@
                     Meet the Team
                 </h2>
                 <div class="team-grid">
-                    <div class="team-member">
-                        <div class="member-avatar">
-                            <span>CH</span>
+                    {% if club.members and club.members.count() > 0 %}
+                        {% for member in club.members.limit(4) %}
+                        <div class="team-member">
+                            <div class="member-avatar">
+                                <span>{{ member.name[:2].upper() if member.name else 'TM' }}</span>
+                            </div>
+                            <h3>{{ member.name }}</h3>
+                            <p class="member-role">{{ member.role }}</p>
                         </div>
-                        <h3>Club Head</h3>
-                        <p class="member-role">President</p>
-                    </div>
-                    <div class="team-member">
-                        <div class="member-avatar">
-                            <span>VP</span>
+                        {% endfor %}
+                    {% else %}
+                        <!-- Default placeholder members if none in database -->
+                        <div class="team-member">
+                            <div class="member-avatar">
+                                <span>CH</span>
+                            </div>
+                            <h3>Club Head</h3>
+                            <p class="member-role">President</p>
                         </div>
-                        <h3>Vice President</h3>
-                        <p class="member-role">Vice President</p>
-                    </div>
-                    <div class="team-member">
-                        <div class="member-avatar">
-                            <span>TL</span>
+                        <div class="team-member">
+                            <div class="member-avatar">
+                                <span>VP</span>
+                            </div>
+                            <h3>Vice President</h3>
+                            <p class="member-role">Vice President</p>
                         </div>
-                        <h3>Tech Lead</h3>
-                        <p class="member-role">Technical Lead</p>
-                    </div>
-                    <div class="team-member">
-                        <div class="member-avatar">
-                            <span>DL</span>
+                        <div class="team-member">
+                            <div class="member-avatar">
+                                <span>TL</span>
+                            </div>
+                            <h3>Tech Lead</h3>
+                            <p class="member-role">Technical Lead</p>
                         </div>
-                        <h3>Design Lead</h3>
-                        <p class="member-role">Creative Director</p>
-                    </div>
+                        <div class="team-member">
+                            <div class="member-avatar">
+                                <span>DL</span>
+                            </div>
+                            <h3>Design Lead</h3>
+                            <p class="member-role">Creative Director</p>
+                        </div>
+                    {% endif %}
                 </div>
             </section>
         </div>
