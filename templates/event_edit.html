@@ -57,11 +57,21 @@
                 <div class="form-group">
                     <label for="size_class">Display Size *</label>
                     <select id="size_class" name="size_class" required>
-                        <option value="size-small" {% if event and event.size_class == 'size-small' %}selected{% endif %}>Small (2 rows)</option>
-                        <option value="size-medium" {% if event and event.size_class == 'size-medium' %}selected{% endif %}>Medium (3 rows)</option>
-                        <option value="size-large" {% if event and event.size_class == 'size-large' %}selected{% endif %}>Large (4 rows)</option>
-                        <option value="size-wide" {% if event and event.size_class == 'size-wide' %}selected{% endif %}>Wide (2 columns)</option>
-                        <option value="size-tall" {% if event and event.size_class == 'size-tall' %}selected{% endif %}>Tall (5 rows)</option>
+                        <optgroup label="Vertical Sizes">
+                            <option value="size-small" {% if event and event.size_class == 'size-small' %}selected{% endif %}>Small (2 rows, 1 col)</option>
+                            <option value="size-medium" {% if event and event.size_class == 'size-medium' %}selected{% endif %}>Medium (3 rows, 1 col)</option>
+                            <option value="size-large" {% if event and event.size_class == 'size-large' %}selected{% endif %}>Large (4 rows, 1 col)</option>
+                            <option value="size-tall" {% if event and event.size_class == 'size-tall' %}selected{% endif %}>Tall (5 rows, 1 col)</option>
+                        </optgroup>
+                        <optgroup label="Horizontal Sizes">
+                            <option value="size-wide" {% if event and event.size_class == 'size-wide' %}selected{% endif %}>Wide (2 rows, 2 cols)</option>
+                            <option value="size-extra-wide" {% if event and event.size_class == 'size-extra-wide' %}selected{% endif %}>Extra Wide (2 rows, 3 cols)</option>
+                            <option value="size-super-wide" {% if event and event.size_class == 'size-super-wide' %}selected{% endif %}>Super Wide (3 rows, 4 cols)</option>
+                        </optgroup>
+                        <optgroup label="Special Sizes">
+                            <option value="size-square-large" {% if event and event.size_class == 'size-square-large' %}selected{% endif %}>Square Large (2x2)</option>
+                            <option value="size-wide-tall" {% if event and event.size_class == 'size-wide-tall' %}selected{% endif %}>Wide Tall (3 rows, 2 cols)</option>
+                        </optgroup>
                     </select>
                     <small class="help-text">Controls the card size in the Pinterest grid layout</small>
                 </div>
