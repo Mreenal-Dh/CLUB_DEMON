@@ -399,6 +399,89 @@ def manager_delete_club(club_id):
     
     return redirect(url_for('manager_dashboard'))
 
+# ==================== CLUB MEMBER MANAGEMENT ====================
+
+@app.route('/manager/club/<int:club_id>/members', methods=['GET'])
+@manager_required
+def manager_club_members(club_id):
+    try:
+        club = Club.query.get_or_404(club_id)
+        members = ClubMember.query.filter_by(club_id=club_id).order_by(ClubMember.joined_at.desc()).all()
+        return render_template('club_members.html', club=club, members=members)
+    except Exception as e:
+        logger.error(f"Error loading club members: {str(e)}", exc_info=True)
+        flash('Error loading club members', 'error')
+        return redirect(url_for('manager_dashboard'))
+
+@app.route('/manager/club/<int:club_id>/members/add', methods=['POST'])
+@manager_required
+def manager_add_member(club_id):
+    try:
+        club = Club.query.get_or_404(club_id)
+        
+        new_member = ClubMember(
+            name=request.form.get('name', '').strip(),
+            role=request.form.get('role', '').strip(),
+            club_id=club_id
+        )
+        
+        if not new_member.name or not new_member.role:
+            flash('Name and role are required', 'error')
+            return redirect(url_for('manager_club_members', club_id=club_id))
+        
+        db.session.add(new_member)
+        db.session.commit()
+        flash(f'{new_member.name} added successfully!', 'success')
+    except Exception as e:
+        logger.error(f"Error adding club member: {str(e)}", exc_info=True)
+        db.session.rollback()
+        flash('Error adding member', 'error')
+    
+    return redirect(url_for('manager_club_members', club_id=club_id))
+
+@app.route('/manager/club/<int:club_id>/members/<int:member_id>/edit', methods=['POST'])
+@manager_required
+def manager_edit_member(club_id, member_id):
+    try:
+        member = ClubMember.query.get_or_404(member_id)
+        
+        if member.club_id != club_id:
+            flash('Member does not belong to this club', 'error')
+            return redirect(url_for('manager_dashboard'))
+        
+        member.name = request.form.get('name', member.name).strip()
+        member.role = request.form.get('role', member.role).strip()
+        
+        db.session.commit()
+        flash(f'{member.name} updated successfully!', 'success')
+    except Exception as e:
+        logger.error(f"Error updating club member: {str(e)}", exc_info=True)
+        db.session.rollback()
+        flash('Error updating member', 'error')
+    
+    return redirect(url_for('manager_club_members', club_id=club_id))
+
+@app.route('/manager/club/<int:club_id>/members/<int:member_id>/delete', methods=['POST'])
+@manager_required
+def manager_delete_member(club_id, member_id):
+    try:
+        member = ClubMember.query.get_or_404(member_id)
+        
+        if member.club_id != club_id:
+            flash('Member does not belong to this club', 'error')
+            return redirect(url_for('manager_dashboard'))
+        
+        member_name = member.name
+        db.session.delete(member)
+        db.session.commit()
+        flash(f'{member_name} removed successfully!', 'success')
+    except Exception as e:
+        logger.error(f"Error deleting club member: {str(e)}", exc_info=True)
+        db.session.rollback()
+        flash('Error removing member', 'error')
+    
+    return redirect(url_for('manager_club_members', club_id=club_id))
+
 # ==================== EVENT MANAGEMENT ====================
 
 @app.route('/manager/event/<int:event_id>/edit', methods=['GET', 'POST'])
