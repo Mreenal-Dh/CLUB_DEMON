@@ -8,6 +8,44 @@
         if (bgLayer) {
             bgLayer.classList.add('club-detail-bg');
         }
+        
+        // Search functionality
+        const searchInput = document.getElementById('eventSearch');
+        const eventBricks = document.querySelectorAll('.event-brick');
+        const noResults = document.getElementById('noResults');
+        
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase().trim();
+            let visibleCount = 0;
+            
+            eventBricks.forEach(brick => {
+                const title = brick.querySelector('h3').textContent.toLowerCase();
+                const category = brick.querySelector('.event-category').textContent.toLowerCase();
+                const eventId = parseInt(brick.getAttribute('data-event'));
+                const event = eventData[eventId];
+                const description = event ? event.description.toLowerCase() : '';
+                const organizer = event ? event.organizer.toLowerCase() : '';
+                
+                const matches = title.includes(searchTerm) || 
+                               category.includes(searchTerm) ||
+                               description.includes(searchTerm) ||
+                               organizer.includes(searchTerm);
+                
+                if (matches) {
+                    brick.style.display = '';
+                    visibleCount++;
+                } else {
+                    brick.style.display = 'none';
+                }
+            });
+            
+            // Show/hide no results message
+            if (visibleCount === 0 && searchTerm !== '') {
+                noResults.style.display = 'flex';
+            } else {
+                noResults.style.display = 'none';
+            }
+        });
     });
 </script>
 
@@ -15,6 +53,33 @@
     <div class="events-header">
         <h1>Campus Events</h1>
         <p class="events-subtitle">Discover upcoming workshops, competitions, and cultural activities</p>
+        
+        <!-- Animated Search Bar -->
+        <div class="search-container">
+            <div class="search-wrapper">
+                <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.35-4.35"></path>
+                </svg>
+                <input 
+                    type="text" 
+                    id="eventSearch" 
+                    class="search-input" 
+                    placeholder="Search events by title, category, organizer..."
+                    autocomplete="off">
+                <div class="search-underline"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- No Results Message -->
+    <div id="noResults" class="no-results-message" style="display: none;">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="m21 21-4.35-4.35"></path>
+        </svg>
+        <h3>No events found</h3>
+        <p>Try adjusting your search terms</p>
     </div>
 
     <!-- Pinterest-Style Masonry Grid - Dynamically Generated -->
@@ -219,4 +284,144 @@ document.querySelector('.btn-share').addEventListener('click', function() {
     }
 });
 </script>
+
+<style>
+/* Search Bar Styles */
+.search-container {
+    margin-top: 32px;
+    display: flex;
+    justify-content: center;
+}
+
+.search-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 600px;
+}
+
+.search-icon {
+    position: absolute;
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    pointer-events: none;
+    transition: all 0.3s ease;
+}
+
+.search-input {
+    width: 100%;
+    padding: 16px 20px 16px 56px;
+    background: rgba(255,255,255,0.05);
+    border: 2px solid rgba(255,255,255,0.1);
+    border-radius: 50px;
+    color: var(--text-100);
+    font-size: 16px;
+    font-weight: 500;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    outline: none;
+}
+
+.search-input::placeholder {
+    color: var(--muted);
+}
+
+.search-input:focus {
+    background: rgba(255,255,255,0.08);
+    border-color: rgba(70,130,255,0.5);
+    box-shadow: 0 0 0 4px rgba(70,130,255,0.1), 0 8px 24px rgba(70,130,255,0.2);
+    transform: translateY(-2px);
+}
+
+.search-input:focus + .search-underline {
+    transform: scaleX(1);
+}
+
+.search-wrapper:has(.search-input:focus) .search-icon {
+    color: rgba(70,130,255,0.9);
+    transform: translateY(-50%) scale(1.1);
+}
+
+.search-underline {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, rgba(70,130,255,0.8), rgba(90,150,255,0.6));
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+    border-radius: 2px;
+}
+
+/* No Results Message */
+.no-results-message {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    text-align: center;
+    animation: fadeIn 0.3s ease;
+}
+
+.no-results-message svg {
+    color: var(--muted);
+    opacity: 0.5;
+    margin-bottom: 20px;
+}
+
+.no-results-message h3 {
+    margin: 0 0 8px 0;
+    font-size: 24px;
+    color: var(--text-100);
+    font-weight: 700;
+}
+
+.no-results-message p {
+    margin: 0;
+    font-size: 16px;
+    color: var(--muted);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Search input animation on page load */
+@keyframes searchPulse {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(70,130,255,0.4);
+    }
+    50% {
+        box-shadow: 0 0 0 8px rgba(70,130,255,0);
+    }
+}
+
+.search-input {
+    animation: searchPulse 2s ease-in-out 1s 1;
+}
+
+@media (max-width: 768px) {
+    .search-container {
+        margin-top: 24px;
+    }
+    
+    .search-input {
+        font-size: 14px;
+        padding: 14px 18px 14px 52px;
+    }
+    
+    .search-icon {
+        left: 18px;
+    }
+}
+</style>
 {% endblock %}
