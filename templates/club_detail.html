@@ -15,8 +15,8 @@
     <!-- Hero Section with Club Header -->
     <section class="club-hero">
         <div class="club-hero-content">
-            {% if club.logo_url %}
-            <img src="{{ club.logo_url }}" alt="{{ club.name }} Logo" class="club-logo-large">
+            {% if club.logo_filename %}
+            <img src="{{ url_for('static', filename='images/' + club.logo_filename) }}" alt="{{ club.name }} Logo" class="club-logo-large">
             {% else %}
             <div class="club-logo-placeholder">
                 <span>{{ club.name[0] if club.name else 'C' }}</span>
@@ -73,7 +73,7 @@
                 <p class="club-description">{{ club.description if club.description else 'No description available.' }}</p>
             </section>
 
-            <!-- Gallery Section -->
+            <!-- Gallery Section - Instagram Style -->
             <section class="content-card gallery-card">
                 <h2 class="section-title">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -84,48 +84,23 @@
                     Gallery
                 </h2>
                 <div class="gallery-container">
-                    <div class="gallery-grid">
-                        {% for i in range(1, 7) %}
-                        <div class="gallery-item">
-                            <img src="{{ url_for('static', filename='images/club.jpg') }}" alt="Gallery {{ i }}">
-                            <div class="gallery-overlay">
-                                <span class="gallery-icon">🔍</span>
+                    <div class="gallery-grid-instagram">
+                        {% if club.gallery_images %}
+                            {% set gallery = club.gallery_images|from_json %}
+                            {% for image in gallery %}
+                                {% if image %}
+                                <div class="instagram-post">
+                                    <img src="{{ url_for('static', filename='images/' + image) }}" alt="Gallery {{ loop.index }}">
+                                </div>
+                                {% endif %}
+                            {% endfor %}
+                        {% else %}
+                            {% for i in range(1, 7) %}
+                            <div class="instagram-post">
+                                <img src="{{ url_for('static', filename='images/club.jpg') }}" alt="Gallery {{ i }}">
                             </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-            </section>
-
-            <!-- Activities Section -->
-            <section class="content-card activities-card">
-                <h2 class="section-title">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="3"></circle>
-                        <path d="M12 1v6m0 6v6m8.66-13.66l-4.24 4.24m-8.48 8.48l-4.24 4.24M23 12h-6m-6 0H1m20.66 8.66l-4.24-4.24m-8.48-8.48l-4.24-4.24"></path>
-                    </svg>
-                    What We Do
-                </h2>
-                <div class="activity-grid">
-                    <div class="activity-item">
-                        <div class="activity-icon">🎓</div>
-                        <h3>Workshops</h3>
-                        <p>Regular skill development sessions</p>
-                    </div>
-                    <div class="activity-item">
-                        <div class="activity-icon">🏆</div>
-                        <h3>Competitions</h3>
-                        <p>Participate in various contests</p>
-                    </div>
-                    <div class="activity-item">
-                        <div class="activity-icon">🤝</div>
-                        <h3>Networking</h3>
-                        <p>Connect with industry experts</p>
-                    </div>
-                    <div class="activity-item">
-                        <div class="activity-icon">🚀</div>
-                        <h3>Projects</h3>
-                        <p>Work on real-world projects</p>
+                            {% endfor %}
+                        {% endif %}
                     </div>
                 </div>
             </section>
@@ -229,10 +204,19 @@
                 <div class="join-info">
                     <h3>Why Join?</h3>
                     <ul>
-                        <li>Build practical skills</li>
-                        <li>Expand your network</li>
-                        <li>Gain leadership experience</li>
-                        <li>Work on exciting projects</li>
+                        {% if club.why_join_reasons %}
+                            {% set reasons = club.why_join_reasons|from_json %}
+                            {% for reason in reasons %}
+                                {% if reason %}
+                                <li>{{ reason }}</li>
+                                {% endif %}
+                            {% endfor %}
+                        {% else %}
+                            <li>Build practical skills</li>
+                            <li>Expand your network</li>
+                            <li>Gain leadership experience</li>
+                            <li>Work on exciting projects</li>
+                        {% endif %}
                     </ul>
                 </div>
             </section>
@@ -276,4 +260,47 @@
         </a>
     </div>
 </div>
+
+<style>
+/* Instagram-style Gallery */
+.gallery-grid-instagram {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+
+.instagram-post {
+    position: relative;
+    aspect-ratio: 1;
+    border-radius: 4px;
+    overflow: hidden;
+    cursor: pointer;
+    background: rgba(0,0,0,0.3);
+    transition: transform 0.3s ease;
+}
+
+.instagram-post:hover {
+    transform: scale(1.05);
+    z-index: 2;
+}
+
+.instagram-post img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: filter 0.3s ease;
+}
+
+.instagram-post:hover img {
+    filter: brightness(1.1);
+}
+
+@media (max-width: 768px) {
+    .gallery-grid-instagram {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 6px;
+    }
+}
+</style>
 {% endblock %}
