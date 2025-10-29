@@ -1,9 +1,10 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, url_for, session, flash, send_from_directory, abort
 import os
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 import logging
 import sys
+import json
 
 app = Flask(__name__)
 
@@ -115,6 +116,45 @@ def internal_error(error):
     logger.error(f"500 Error: {error}")
     db.session.rollback()
     return render_template('500.html'), 500
+
+# ==================== HELPER FUNCTIONS ====================
+
+def get_available_images():
+    """Scan templates/images directory for available images"""
+    images_path = os.path.join(app.root_path, 'templates', 'images')
+    
+    # Create directory if it doesn't exist
+    if not os.path.exists(images_path):
+        try:
+            os.makedirs(images_path)
+            logger.info(f"Created images directory at {images_path}")
+        except Exception as e:
+            logger.error(f"Error creating images directory: {str(e)}")
+            return []
+    
+    # Get all image files
+    valid_extensions = {'.jpg', '.jpeg', '.png', '.gif', '.webp'}
+    images = []
+    
+    try:
+        for filename in os.listdir(images_path):
+            if any(filename.lower().endswith(ext) for ext in valid_extensions):
+                images.append(filename)
+    except Exception as e:
+        logger.error(f"Error scanning images directory: {str(e)}")
+    
+    return sorted(images)
+
+# Custom Jinja filter to parse JSON
+@app.template_filter('from_json')
+def from_json_filter(value):
+    """Convert JSON string to Python object"""
+    if not value:
+        return []
+    try:
+        return json.loads(value)
+    except:
+        return []
 
 # ==================== INITIALIZATION ====================
 
@@ -341,13 +381,29 @@ def manager_edit_club(club_id):
         try:
             club.name = request.form.get('name', club.name)
             club.description = request.form.get('description', club.description)
-            club.logo_url = request.form.get('logo_url', club.logo_url)
+            club.logo_filename = request.form.get('logo_filename', club.logo_filename)  # CHANGED
+            
             try:
                 club.members_count = int(request.form.get('members_count', club.members_count))
             except ValueError:
                 pass
+            
             club.is_recruiting = bool(request.form.get('is_recruiting'))
             club.application_link = request.form.get('application_link', '')
+            
+            # NEW: Handle Why Join reasons
+            reasons = []
+            for key, value in request.form.items():
+                if key.startswith('why_join_reason_') and value.strip():
+                    reasons.append(value.strip())
+            club.why_join_reasons = json.dumps(reasons)
+            
+            # NEW: Handle Gallery images
+            gallery = []
+            for key, value in request.form.items():
+                if key.startswith('gallery_image_') and value.strip():
+                    gallery.append(value.strip())
+            club.gallery_images = json.dumps(gallery)
             
             db.session.commit()
             flash('Club updated successfully!', 'success')
@@ -357,20 +413,36 @@ def manager_edit_club(club_id):
             db.session.rollback()
             flash('Error updating club', 'error')
     
-    return render_template('club_edit.html', club=club)
+    # CHANGED: Pass available_images to template
+    available_images = get_available_images()
+    return render_template('club_edit.html', club=club, available_images=available_images)
 
 @app.route('/manager/club/new', methods=['GET', 'POST'])
 @manager_required
 def manager_new_club():
     if request.method == 'POST':
         try:
+            # NEW: Handle Why Join reasons
+            reasons = []
+            for key, value in request.form.items():
+                if key.startswith('why_join_reason_') and value.strip():
+                    reasons.append(value.strip())
+            
+            # NEW: Handle Gallery images
+            gallery = []
+            for key, value in request.form.items():
+                if key.startswith('gallery_image_') and value.strip():
+                    gallery.append(value.strip())
+            
             new_club = Club(
                 name=request.form.get('name', 'New Club'),
                 description=request.form.get('description', ''),
-                logo_url=request.form.get('logo_url', ''),
+                logo_filename=request.form.get('logo_filename', ''),  # CHANGED
                 members_count=int(request.form.get('members_count', 0) or 0),
                 is_recruiting=bool(request.form.get('is_recruiting')),
-                application_link=request.form.get('application_link', '')
+                application_link=request.form.get('application_link', ''),
+                why_join_reasons=json.dumps(reasons),  # NEW
+                gallery_images=json.dumps(gallery)     # NEW
             )
             
             db.session.add(new_club)
@@ -382,7 +454,9 @@ def manager_new_club():
             db.session.rollback()
             flash('Error creating club', 'error')
     
-    return render_template('club_edit.html', club=None)
+    # CHANGED: Pass available_images to template
+    available_images = get_available_images()
+    return render_template('club_edit.html', club=None, available_images=available_images)
 
 @app.route('/manager/club/<int:club_id>/delete', methods=['POST'])
 @manager_required
@@ -565,8 +639,21 @@ def health():
         logger.error(f"Health check failed: {str(e)}")
         return {'status': 'unhealthy', 'database': 'disconnected', 'error': str(e)}, 500
 
+# ==================== IMAGE SERVING ROUTE ====================
+
+@app.route('/templates/images/<path:filename>')
+def serve_template_image(filename):
+    """Serve images from templates/images directory"""
+    images_path = os.path.join(app.root_path, 'templates', 'images')
+    try:
+        return send_from_directory(images_path, filename)
+    except FileNotFoundError:
+        logger.error(f"Image not found: {filename}")
+        abort(404)
+
 # ==================== RUN ====================
 
 if __name__ == '__main__':
     init_db()
     app.run(debug=True)
+
