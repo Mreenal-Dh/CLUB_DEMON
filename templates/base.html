@@ -30,6 +30,8 @@
 			<li><a href="{{ url_for('events') }}">Events</a></li>
 		</ul>
 
+		<!-- Profile section - hidden on login page -->
+		{% if request.endpoint != 'index' %}
 		<div class="profile" aria-hidden="false">
 			<button id="profileBtn" class="profile-btn" aria-haspopup="true" aria-expanded="false">
 				<img src="{{ url_for('static', filename='images/pfp.jpg') }}" alt="Profile" class="pfp">
@@ -38,6 +40,7 @@
 				<a class="profile-menu-item" href="{{ url_for('index') }}">Logout</a>
 			</div>
 		</div>
+		{% endif %}
 	</nav>
 
 	<main>
