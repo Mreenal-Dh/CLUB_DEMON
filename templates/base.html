@@ -52,5 +52,87 @@
 	</footer>
 
 	<script src="{{ url_for('static', filename='script.js') }}"></script>
+	<!-- Add this before the closing </body> tag in base.html -->
+
+<!-- AI Chatbot Widget -->
+<div class="chatbot-container">
+    <!-- Chatbot Toggle Button -->
+    <button id="chatbotToggle" class="chatbot-toggle" aria-label="Open chatbot">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+        </svg>
+    </button>
+
+    <!-- Chatbot Window -->
+    <div id="chatbotWindow" class="chatbot-window">
+        <!-- Header -->
+        <div class="chatbot-header">
+            <div class="chatbot-header-info">
+                <div class="chatbot-avatar">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
+                        <line x1="9" y1="9" x2="9.01" y2="9"></line>
+                        <line x1="15" y1="9" x2="15.01" y2="9"></line>
+                    </svg>
+                </div>
+                <div class="chatbot-title">
+                    <h3>Campus Assistant</h3>
+                    <div class="chatbot-status">
+                        <span class="status-dot"></span>
+                        <span>Online</span>
+                    </div>
+                </div>
+            </div>
+            <div class="chatbot-actions">
+                <button id="chatbotClear" class="chatbot-action-btn" title="Clear conversation">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                </button>
+                <button id="chatbotClose" class="chatbot-action-btn" title="Close">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Messages Area -->
+        <div id="chatbotMessages" class="chatbot-messages">
+            <!-- Messages will be added here dynamically -->
+        </div>
+
+        <!-- Quick Suggestions -->
+        <div id="quickSuggestions" class="quick-suggestions">
+            <!-- Suggestions will be added here dynamically -->
+        </div>
+
+        <!-- Input Area -->
+        <div class="chatbot-input">
+            <div class="input-wrapper">
+                <input 
+                    type="text" 
+                    id="chatInputField" 
+                    class="chat-input-field" 
+                    placeholder="Ask me anything..."
+                    maxlength="500"
+                    autocomplete="off">
+                <button id="chatSendBtn" class="chat-send-btn" aria-label="Send message">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Include chatbot CSS and JS -->
+<link rel="stylesheet" href="{{ url_for('static', filename='chatbot.css') }}">
+<script src="{{ url_for('static', filename='chatbot.js') }}"></script>
 </body>
 </html>
