@@ -11,11 +11,22 @@ class ClubChatbot:
         self.hf_token = hf_token or os.environ.get('HUGGINGFACE_API_TOKEN')
         
         # Initialize Hugging Face Inference Client
-        # Using Mistral-7B-Instruct for good performance on free tier
-        self.client = InferenceClient(
-            model="mistralai/Mistral-7B-Instruct-v0.2",
-            token=self.hf_token
-        )
+        # Using Mistral-7B-Instruct-v0.2 - FREE on Hugging Face Inference API
+        # Alternative models (all free):
+        # - "meta-llama/Llama-2-7b-chat-hf"
+        # - "mistralai/Mixtral-8x7B-Instruct-v0.1"
+        # - "HuggingFaceH4/zephyr-7b-beta"
+        # - "tiiuae/falcon-7b-instruct"
+        
+        try:
+            self.client = InferenceClient(
+                model="mistralai/Mistral-7B-Instruct-v0.2",
+                token=self.hf_token
+            )
+            print("✓ Chatbot initialized with Mistral-7B-Instruct-v0.2")
+        except Exception as e:
+            print(f"✗ Error initializing chatbot: {e}")
+            self.client = None
         
         self.conversation_history = []
         self.max_history = 5  # Keep last 5 exchanges
@@ -74,7 +85,7 @@ class ClubChatbot:
             f"- {club['name']}: {club['description']} "
             f"({'Recruiting' if club['is_recruiting'] else 'Not recruiting'}, "
             f"{club['members_count']} members)"
-            for club in context['clubs']
+            for club in context['clubs'][:10]  # Limit to avoid token overflow
         ])
         
         events_info = "\n".join([
@@ -106,7 +117,7 @@ Guidelines:
 2. Provide specific information from the data above
 3. If asked about a club or event not in the data, say you don't have that information
 4. Encourage students to join clubs and attend events
-5. Keep responses under 200 words
+5. Keep responses under 150 words
 6. Use emojis occasionally to be friendly 😊
 
 Answer the student's question based on the information provided above."""
@@ -115,6 +126,9 @@ Answer the student's question based on the information provided above."""
     
     def generate_response(self, user_message, db):
         """Generate response using Hugging Face API"""
+        if not self.client:
+            return "Sorry, the chatbot service is currently unavailable. Please try again later! 🔄"
+        
         try:
             # Get fresh database context
             context = self.get_database_context(db)
@@ -123,7 +137,7 @@ Answer the student's question based on the information provided above."""
             # Build conversation messages
             messages = [{"role": "system", "content": system_prompt}]
             
-            # Add conversation history
+            # Add conversation history (keep it short)
             for msg in self.conversation_history[-self.max_history:]:
                 messages.append(msg)
             
@@ -132,14 +146,25 @@ Answer the student's question based on the information provided above."""
             
             # Generate response
             response = ""
-            for message in self.client.chat_completion(
-                messages=messages,
-                max_tokens=300,
-                temperature=0.7,
-                stream=True
-            ):
-                if message.choices[0].delta.content:
-                    response += message.choices[0].delta.content
+            try:
+                for message in self.client.chat_completion(
+                    messages=messages,
+                    max_tokens=250,
+                    temperature=0.7,
+                    stream=True
+                ):
+                    if message.choices[0].delta.content:
+                        response += message.choices[0].delta.content
+            except Exception as stream_error:
+                print(f"Streaming error: {stream_error}")
+                # Fallback to non-streaming
+                result = self.client.chat_completion(
+                    messages=messages,
+                    max_tokens=250,
+                    temperature=0.7,
+                    stream=False
+                )
+                response = result.choices[0].message.content
             
             # Update conversation history
             self.conversation_history.append({"role": "user", "content": user_message})
