@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash, send_from_directory, abort
+from flask import Flask, render_template, request, redirect, url_for, session, flash, send_from_directory, abort, jsonify
 import os
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
@@ -37,7 +37,27 @@ app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
 
 # Initialize database
 db = SQLAlchemy(app)
-chatbot = ClubChatbot()
+
+# Initialize chatbot with token from environment
+chatbot = None
+
+def init_chatbot():
+    """Initialize chatbot with proper token"""
+    global chatbot
+    hf_token = os.environ.get('HUGGINGFACE_API_TOKEN')
+    
+    if not hf_token:
+        logger.warning("⚠️ HUGGINGFACE_API_TOKEN not found in environment variables!")
+        logger.warning("Please add it to your Render environment variables")
+    else:
+        logger.info("✓ Hugging Face token found")
+    
+    try:
+        chatbot = ClubChatbot(hf_token=hf_token)
+        logger.info("✓ Chatbot initialized successfully")
+    except Exception as e:
+        logger.error(f"✗ Error initializing chatbot: {str(e)}")
+        chatbot = None
 
 # ==================== DATABASE MODELS ====================
 
@@ -234,6 +254,10 @@ def init_db():
                 logger.info(f"Seeded {len(events_data)} events")
             
             logger.info("Database initialization complete!")
+            
+            # Initialize chatbot after database is ready
+            init_chatbot()
+            
         except Exception as e:
             logger.error(f"Database initialization error: {str(e)}", exc_info=True)
             raise
@@ -383,7 +407,7 @@ def manager_edit_club(club_id):
         try:
             club.name = request.form.get('name', club.name)
             club.description = request.form.get('description', club.description)
-            club.logo_filename = request.form.get('logo_filename', club.logo_filename)  # CHANGED
+            club.logo_url = request.form.get('logo_url', club.logo_url)
             
             try:
                 club.members_count = int(request.form.get('members_count', club.members_count))
@@ -393,20 +417,6 @@ def manager_edit_club(club_id):
             club.is_recruiting = bool(request.form.get('is_recruiting'))
             club.application_link = request.form.get('application_link', '')
             
-            # NEW: Handle Why Join reasons
-            reasons = []
-            for key, value in request.form.items():
-                if key.startswith('why_join_reason_') and value.strip():
-                    reasons.append(value.strip())
-            club.why_join_reasons = json.dumps(reasons)
-            
-            # NEW: Handle Gallery images
-            gallery = []
-            for key, value in request.form.items():
-                if key.startswith('gallery_image_') and value.strip():
-                    gallery.append(value.strip())
-            club.gallery_images = json.dumps(gallery)
-            
             db.session.commit()
             flash('Club updated successfully!', 'success')
             return redirect(url_for('manager_dashboard'))
@@ -415,7 +425,6 @@ def manager_edit_club(club_id):
             db.session.rollback()
             flash('Error updating club', 'error')
     
-    # CHANGED: Pass available_images to template
     available_images = get_available_images()
     return render_template('club_edit.html', club=club, available_images=available_images)
 
@@ -424,27 +433,13 @@ def manager_edit_club(club_id):
 def manager_new_club():
     if request.method == 'POST':
         try:
-            # NEW: Handle Why Join reasons
-            reasons = []
-            for key, value in request.form.items():
-                if key.startswith('why_join_reason_') and value.strip():
-                    reasons.append(value.strip())
-            
-            # NEW: Handle Gallery images
-            gallery = []
-            for key, value in request.form.items():
-                if key.startswith('gallery_image_') and value.strip():
-                    gallery.append(value.strip())
-            
             new_club = Club(
                 name=request.form.get('name', 'New Club'),
                 description=request.form.get('description', ''),
-                logo_filename=request.form.get('logo_filename', ''),  # CHANGED
+                logo_url=request.form.get('logo_url', ''),
                 members_count=int(request.form.get('members_count', 0) or 0),
                 is_recruiting=bool(request.form.get('is_recruiting')),
-                application_link=request.form.get('application_link', ''),
-                why_join_reasons=json.dumps(reasons),  # NEW
-                gallery_images=json.dumps(gallery)     # NEW
+                application_link=request.form.get('application_link', '')
             )
             
             db.session.add(new_club)
@@ -456,7 +451,6 @@ def manager_new_club():
             db.session.rollback()
             flash('Error creating club', 'error')
     
-    # CHANGED: Pass available_images to template
     available_images = get_available_images()
     return render_template('club_edit.html', club=None, available_images=available_images)
 
@@ -629,66 +623,97 @@ def manager_delete_event(event_id):
         flash('Error deleting event', 'error')
     
     return redirect(url_for('manager_dashboard'))
+
 # ==================== CHATBOT ROUTES ====================
 
 @app.route('/api/chatbot/message', methods=['POST'])
 def chatbot_message():
     """Handle chatbot messages"""
     try:
+        # Check if chatbot is initialized
+        if not chatbot:
+            logger.error("Chatbot not initialized")
+            return jsonify({
+                'error': 'Chatbot service unavailable',
+                'response': "I'm currently unavailable. Please check that the Hugging Face API token is configured. 🔧"
+            }), 500
+        
         data = request.get_json()
         user_message = data.get('message', '').strip()
         
         if not user_message:
-            return {'error': 'Message cannot be empty'}, 400
+            return jsonify({'error': 'Message cannot be empty'}), 400
         
-        response = chatbot.generate_response(user_message, db)
-        context = chatbot.get_database_context(db)
-        suggestions = chatbot.get_quick_suggestions(context)
+        logger.info(f"Received chatbot message: {user_message[:50]}...")
         
-        return {
+        # Generate response with database context
+        with app.app_context():
+            response = chatbot.generate_response(user_message, db)
+            context = chatbot.get_database_context(db)
+            suggestions = chatbot.get_quick_suggestions(context)
+        
+        logger.info("Generated chatbot response successfully")
+        
+        return jsonify({
             'response': response,
             'suggestions': suggestions,
             'timestamp': datetime.utcnow().isoformat()
-        }, 200
+        }), 200
         
     except Exception as e:
         logger.error(f"Chatbot error: {str(e)}", exc_info=True)
-        return {
+        return jsonify({
             'error': 'Failed to generate response',
             'response': "I'm having trouble right now. Please try again! 🔄"
-        }, 500
+        }), 500
 
 @app.route('/api/chatbot/clear', methods=['POST'])
 def chatbot_clear():
     """Clear chatbot conversation history"""
     try:
-        chatbot.clear_history()
-        return {'message': 'Conversation cleared'}, 200
+        if chatbot:
+            chatbot.clear_history()
+            return jsonify({'message': 'Conversation cleared'}), 200
+        else:
+            return jsonify({'error': 'Chatbot not initialized'}), 500
     except Exception as e:
         logger.error(f"Error clearing chat: {str(e)}")
-        return {'error': 'Failed to clear conversation'}, 500
+        return jsonify({'error': 'Failed to clear conversation'}), 500
 
 @app.route('/api/chatbot/suggestions', methods=['GET'])
 def chatbot_suggestions():
     """Get quick reply suggestions"""
     try:
-        context = chatbot.get_database_context(db)
-        suggestions = chatbot.get_quick_suggestions(context)
-        return {'suggestions': suggestions}, 200
+        if not chatbot:
+            return jsonify({'suggestions': []}), 200
+            
+        with app.app_context():
+            context = chatbot.get_database_context(db)
+            suggestions = chatbot.get_quick_suggestions(context)
+        return jsonify({'suggestions': suggestions}), 200
     except Exception as e:
         logger.error(f"Error getting suggestions: {str(e)}")
-        return {'error': 'Failed to get suggestions'}, 500
+        return jsonify({'error': 'Failed to get suggestions'}), 500
 
 # ==================== HEALTH CHECK ====================
 
 @app.route('/health')
 def health():
     try:
-        db.session.execute('SELECT 1')
-        return {'status': 'healthy', 'database': 'connected'}, 200
+        db.session.execute(db.text('SELECT 1'))
+        chatbot_status = 'initialized' if chatbot else 'not initialized'
+        return jsonify({
+            'status': 'healthy',
+            'database': 'connected',
+            'chatbot': chatbot_status
+        }), 200
     except Exception as e:
         logger.error(f"Health check failed: {str(e)}")
-        return {'status': 'unhealthy', 'database': 'disconnected', 'error': str(e)}, 500
+        return jsonify({
+            'status': 'unhealthy',
+            'database': 'disconnected',
+            'error': str(e)
+        }), 500
 
 # ==================== IMAGE SERVING ROUTE ====================
 
@@ -707,5 +732,3 @@ def serve_template_image(filename):
 if __name__ == '__main__':
     init_db()
     app.run(debug=True)
-
-
