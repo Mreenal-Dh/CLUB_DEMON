@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 import os
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
+from chatbot import ClubChatbot
 import logging
 import sys
 import json
@@ -36,6 +37,7 @@ app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
 
 # Initialize database
 db = SQLAlchemy(app)
+chatbot = ClubChatbot()
 
 # ==================== DATABASE MODELS ====================
 
@@ -627,6 +629,55 @@ def manager_delete_event(event_id):
         flash('Error deleting event', 'error')
     
     return redirect(url_for('manager_dashboard'))
+# ==================== CHATBOT ROUTES ====================
+
+@app.route('/api/chatbot/message', methods=['POST'])
+def chatbot_message():
+    """Handle chatbot messages"""
+    try:
+        data = request.get_json()
+        user_message = data.get('message', '').strip()
+        
+        if not user_message:
+            return {'error': 'Message cannot be empty'}, 400
+        
+        response = chatbot.generate_response(user_message, db)
+        context = chatbot.get_database_context(db)
+        suggestions = chatbot.get_quick_suggestions(context)
+        
+        return {
+            'response': response,
+            'suggestions': suggestions,
+            'timestamp': datetime.utcnow().isoformat()
+        }, 200
+        
+    except Exception as e:
+        logger.error(f"Chatbot error: {str(e)}", exc_info=True)
+        return {
+            'error': 'Failed to generate response',
+            'response': "I'm having trouble right now. Please try again! 🔄"
+        }, 500
+
+@app.route('/api/chatbot/clear', methods=['POST'])
+def chatbot_clear():
+    """Clear chatbot conversation history"""
+    try:
+        chatbot.clear_history()
+        return {'message': 'Conversation cleared'}, 200
+    except Exception as e:
+        logger.error(f"Error clearing chat: {str(e)}")
+        return {'error': 'Failed to clear conversation'}, 500
+
+@app.route('/api/chatbot/suggestions', methods=['GET'])
+def chatbot_suggestions():
+    """Get quick reply suggestions"""
+    try:
+        context = chatbot.get_database_context(db)
+        suggestions = chatbot.get_quick_suggestions(context)
+        return {'suggestions': suggestions}, 200
+    except Exception as e:
+        logger.error(f"Error getting suggestions: {str(e)}")
+        return {'error': 'Failed to get suggestions'}, 500
 
 # ==================== HEALTH CHECK ====================
 
@@ -656,4 +707,5 @@ def serve_template_image(filename):
 if __name__ == '__main__':
     init_db()
     app.run(debug=True)
+
 
